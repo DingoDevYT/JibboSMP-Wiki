@@ -10,72 +10,57 @@
 
 <div class="forum-wrapper">
     <div class="header">
-        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
-        <h1>Beta 1.7.3 Server Wiki</h1>
+        <img src="assets/server-icon.png" alt="Logo" class="logo">
+        <h1 id="locTitle">Loading...</h1>
     </div>
 
     <div class="navbar">
         <a href="index.html">Home</a>
-        <a href="atlas-map.html">Interactive Atlas</a>
-        <a href="submit.html">Submit Location</a>
+        <a href="atlas-map.html">Atlas</a>
+        <button id="editBtn" class="pan-button" style="margin-left:auto;">Edit Page</button>
     </div>
 
-    <div class="content" id="loadingContent">
-        <p style="color: #cccccc; text-align: center; padding: 50px;">Loading database...</p>
-    </div>
-
-    <div class="content" id="locationContent" style="display: none;">
-        <div style="background-color: #262626; border: 1px solid #444444; padding: 20px; margin-bottom: 20px;">
-            <h2 id="locTitle" style="margin-top: 0; color: #55aaff; border-bottom: 1px solid #444444; padding-bottom: 10px;"></h2>
-            
-            <div style="display: flex; gap: 20px; margin-top: 15px;">
-                <div style="flex: 0 0 400px;">
-                    <img id="locImage" src="" alt="Location Screenshot" style="width: 100%; border: 2px solid #1e1e1e; image-rendering: pixelated;">
-                    <div style="background-color: #1e1e1e; border: 1px solid #444444; padding: 10px; margin-top: 10px;">
-                        <p id="locCoords" style="margin: 0; color: #999999; font-family: monospace; font-size: 14px;"></p>
-                    </div>
-                    <button class="pan-button" id="mapButton" style="width: 100%; margin-top: 10px; padding: 10px;">View on Interactive Map</button>
-                </div>
-                <div style="flex-grow: 1;">
-                    <h3 style="color: #ffffff; margin-top: 0;">Description</h3>
-                    <p id="locDesc" style="color: #cccccc; line-height: 1.6;"></p>
+    <div class="content" id="locationContent" style="display:none;">
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 0 0 400px;">
+                <img id="locImage" style="width: 100%; border: 2px solid #555;">
+                <div style="background: #1e1e1e; padding: 10px; margin-top: 10px;">
+                    <p id="locCoords"></p>
+                    <p id="ownerLink" style="margin-top:5px;"></p>
                 </div>
             </div>
+            <div style="flex-grow: 1;">
+                <h3>History & Description</h3>
+                <p id="locDesc" style="line-height: 1.6;"></p>
+            </div>
         </div>
-    </div>
-
-    <div class="content" id="errorContent" style="display: none;">
-        <h2 style="color: #ff5555;">Location Not Found</h2>
-        <p id="errorReason" style="color: #cccccc;"></p>
-        <a href="atlas-map.html" style="color: #55aaff;">Return to the Atlas</a>
     </div>
 </div>
 
 <script src="locations.js"></script>
 <script>
 function renderLocationDetails() {
-    document.getElementById('loadingContent').style.display = 'none';
-    const urlParams = new URLSearchParams(window.location.search);
-    let targetId = urlParams.get('id');
-
-    if (!targetId) {
-        document.getElementById('errorContent').style.display = 'block';
-        document.getElementById('errorReason').innerText = "No ID provided.";
-        return;
-    }
-
-    const loc = serverLocations.find(l => l.id.toLowerCase().trim() === targetId.toLowerCase().trim());
+    const id = new URLSearchParams(window.location.search).get('id');
+    const loc = serverLocations.find(l => l.id === id);
 
     if (loc) {
         document.getElementById('locationContent').style.display = 'block';
         document.getElementById('locTitle').innerText = loc.name;
-        document.getElementById('locImage').src = loc.image.startsWith('http') ? loc.image : "assets/" + loc.image;
-        document.getElementById('locCoords').innerHTML = `X: ${loc.x} | Y: ${loc.y} | Z: ${loc.z}<br>By: ${loc.ownerPlayer} | ${loc.buildDate}`;
+        document.getElementById('locImage').src = loc.image;
         document.getElementById('locDesc').innerText = loc.description;
-        document.getElementById('mapButton').onclick = () => window.location.href = `atlas-map.html?x=${loc.x}&y=${loc.y}&z=${loc.z}`;
-    } else {
-        document.getElementById('errorContent').style.display = 'block';
-        document.getElementById('errorReason').innerText = "Could not find " + targetId;
+        document.getElementById('locCoords').innerText = `X: ${loc.x} Y: ${loc.y} Z: ${loc.z}`;
+        
+        // Auto-linking Logic
+        let ownerHtml = "Built By: ";
+        const player = serverPlayers.find(p => p.name === loc.ownerPlayer);
+        const group = serverGroups.find(g => g.name === loc.ownerGroup);
+
+        if (player) ownerHtml += `<a href="player.html?id=${player.id}" style="color:#55aaff;">${player.name}</a>`;
+        else if (group) ownerHtml += `<a href="group.html?id=${group.id}" style="color:#55aaff;">${group.name}</a>`;
+        else ownerHtml += loc.ownerPlayer || loc.ownerGroup || "Unknown";
+
+        document.getElementById('ownerLink').innerHTML = ownerHtml;
+        document.getElementById('editBtn').onclick = () => window.location.href = `submit.html?edit=${loc.id}`;
     }
 }
 </script>

@@ -1,9 +1,15 @@
 let serverLocations = [];
+let serverPlayers = [];
+let serverGroups = [];
 
-const sheetCSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSd_knG9JWDn5KdFZ98mLTYBSiUCXZSFxuT9-kqy7hAIfEXwy0Nb--B_AdTqoe1V3oyzK4JjL9UD5U3/pub?output=csv";
+const BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSd_knG9JWDn5KdFZ98mLTYBSiUCXZSFxuT9-kqy7hAIfEXwy0Nb--B_AdTqoe1V3oyzK4JjL9UD5U3/pub?";
+const URLS = {
+    locations: BASE_URL + "gid=0&single=true&output=csv", // Jibbo MC Server - Locations - Locations.csv
+    players: BASE_URL + "gid=YOUR_PLAYER_GID&single=true&output=csv", // Jibbo MC Server - Locations - Players.csv
+    groups: BASE_URL + "gid=YOUR_GROUP_GID&single=true&output=csv"  // Jibbo MC Server - Locations - Groups.csv
+};
 
-// Bulletproof CSV parser that handles internal commas and multiline descriptions
-function parseCSV(csvText) {
+function parseCSV(csvText, type) {
     const result = [];
     let row = [];
     let col = '';
@@ -11,68 +17,47 @@ function parseCSV(csvText) {
 
     for (let i = 0; i < csvText.length; i++) {
         let cc = csvText[i], nc = csvText[i+1];
-        
         if (cc === '"' && quote && nc === '"') { col += cc; ++i; continue; }
         if (cc === '"') { quote = !quote; continue; }
         if (cc === ',' && !quote) { row.push(col.trim()); col = ''; continue; }
-        
-        // Handle line breaks properly outside of quotes
         if ((cc === '\n' || cc === '\r') && !quote) {
             row.push(col.trim());
             if (row.length > 1) result.push(row);
             row = []; col = '';
-            if (cc === '\r' && nc === '\n') ++i; // Skip Windows line endings
+            if (cc === '\r' && nc === '\n') ++i;
             continue;
         }
         col += cc;
     }
-    if (col || row.length > 0) {
-        row.push(col.trim());
-        if (row.length > 1) result.push(row);
-    }
+    if (col || row.length > 0) { row.push(col.trim()); if (row.length > 1) result.push(row); }
 
-    const objects = [];
-    // Skip the header row (index 0)
-    for (let i = 1; i < result.length; i++) {
-        const values = result[i];
-        
-        // Ensure we have all 11 columns from the new Google Sheet structure
-        if (values.length >= 11) {
-            const status = values[10].toLowerCase();
-            
-            if (status === 'approved') {
-                objects.push({
-                    id: values[0],
-                    name: values[1],
-                    ownerPlayer: values[2],
-                    ownerGroup: values[3],
-                    buildDate: values[4],
-                    x: parseInt(values[5]),
-                    y: parseInt(values[6]),
-                    z: parseInt(values[7]),
-                    image: values[8],
-                    description: values[9]
-                });
-            }
-        }
-    }
-    return objects;
+    return result.slice(1).filter(v => v[v.length - 1].toLowerCase() === 'approved').map(v => {
+        if (type === 'locations') return { id: v[0], name: v[1], ownerPlayer: v[2], ownerGroup: v[3], buildDate: v[4], x: v[5], y: v[6], z: v[7], image: v[8], description: v[9] };
+        if (type === 'players') return { id: v[0], name: v[1], joinDate: v[2], group: v[3], image: v[4], description: v[5] };
+        if (type === 'groups') return { id: v[0], name: v[1], foundingDate: v[2], leader: v[3], image: v[4], description: v[5] };
+    });
 }
 
-async function loadLocations() {
+async function loadAllData() {
     try {
-        const response = await fetch(sheetCSV_URL + "&t=" + new Date().getTime());
-        const csvData = await response.text();
-        serverLocations = parseCSV(csvData);
-        
-        // Trigger page updates depending on what page the user is currently on
-        if (typeof renderLocations === 'function') renderLocations();
+        const cacheBust = "&t=" + new Date().getTime();
+        const [locRes, playRes, groupRes] = await Promise.all([
+            fetch(URLS.locations + cacheBust),
+            fetch(URLS.players + cacheBust),
+            fetch(URLS.groups + cacheBust)
+        ]);
+
+        serverLocations = parseCSV(await locRes.text(), 'locations');
+        serverPlayers = parseCSV(await playRes.text(), 'players');
+        serverGroups = parseCSV(await groupRes.text(), 'groups');
+
+        // Refresh UI
         if (typeof renderLatestAdditions === 'function') renderLatestAdditions();
+        if (typeof renderLocations === 'function') renderLocations();
         if (typeof renderLocationDetails === 'function') renderLocationDetails();
-        
-    } catch (error) {
-        console.error('Error loading the live database:', error);
-    }
+        if (typeof populateDropdowns === 'function') populateDropdowns();
+        if (typeof checkEditMode === 'function') checkEditMode();
+    } catch (e) { console.error("Database Error:", e); }
 }
 
-loadLocations();
+loadAllData();
