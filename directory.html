@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Server Directory</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dir-tabs { display: flex; gap: 5px; margin-bottom: 20px; }
+        .dir-tab { background: #333; padding: 10px 20px; cursor: pointer; border: 1px solid #444; color: #777; font-weight: bold; }
+        .dir-tab.active { background: #4a5d23; color: #fff; }
+        .dir-section { display: none; }
+        .dir-section.active { display: block; }
+    </style>
+</head>
+<body>
+<div class="forum-wrapper">
+    <!-- Insert Header/Navbar Here -->
+    <div class="content">
+        <div class="dir-tabs">
+            <div class="dir-tab active" onclick="switchDir('locations')">Locations</div>
+            <div class="dir-tab" onclick="switchDir('players')">Players</div>
+            <div class="dir-tab" onclick="switchDir('groups')">Groups</div>
+        </div>
+
+        <div id="sec-locations" class="dir-section active"></div>
+        <div id="sec-players" class="dir-section"></div>
+        <div id="sec-groups" class="dir-section"></div>
+    </div>
+</div>
+<script src="locations.js"></script>
+<script>
+function switchDir(type) {
+    document.querySelectorAll('.dir-tab, .dir-section').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('sec-' + type).classList.add('active');
+}
+
+window.renderPage = function() {
+    renderList('sec-locations', serverLocations, 'location');
+    renderList('sec-players', serverPlayers, 'player');
+    renderList('sec-groups', serverGroups, 'group');
+};
+
+function renderList(targetId, data, type) {
+    document.getElementById(targetId).innerHTML = data.map(item => `
+        <div class="board-item">
+            <div class="loc-thumb" style="background-image: url('${item.image}')"></div>
+            <div class="board-info">
+                <h2><a href="${type}.html?id=${item.id}">${item.name}</a></h2>
+                <p>${item.description.substring(0, 100)}...</p>
+            </div>
+        </div>
+    `).join('') || "<p>No entries found.</p>";
+}
+</script>
+</body>
+</html>
