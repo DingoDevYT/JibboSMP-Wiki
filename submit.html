@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit a Location - Server Wiki</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="forum-wrapper">
+    <div class="header">
+        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
+        <h1>Submit a Location</h1>
+    </div>
+
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="atlas-map.html">Interactive Atlas</a>
+        <a href="submit.html">Submit Location</a>
+    </div>
+
+    <div class="content">
+        <div style="background-color: #262626; border: 1px solid #444444; padding: 20px; margin-bottom: 20px;">
+            <h2 style="margin-top: 0; color: #55aaff; border-bottom: 1px solid #444444; padding-bottom: 10px;">Add to the Atlas</h2>
+            <p style="color: #cccccc; margin-bottom: 20px;">Fill out the form below to submit a new build or location to the wiki. All submissions enter an approval queue before appearing on the live map.</p>
+            
+            <!-- Success Message Container -->
+            <div data-fs-success style="display: none; background-color: #4a5d23; border: 1px solid #2d3815; padding: 15px; color: white; margin-bottom: 20px; font-weight: bold;">
+                Success! Your location has been sent to the admin for approval.
+            </div>
+
+            <!-- Global Error Message Container -->
+            <div data-fs-error style="display: none; background-color: #802020; border: 1px solid #551515; padding: 15px; color: white; margin-bottom: 20px; font-weight: bold;">
+                There was a problem submitting your form. Please check your inputs.
+            </div>
+            
+            <form id="location-form">
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Location Name:</label>
+                    <input type="text" name="location_name" data-fs-field required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                    <span data-fs-error="location_name" style="color: #ff5555; font-size: 12px; display: block; margin-top: 5px;"></span>
+                </div>
+
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">X Coordinate:</label>
+                        <input type="number" name="coord_x" data-fs-field required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                        <span data-fs-error="coord_x" style="color: #ff5555; font-size: 12px;"></span>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Y Coordinate:</label>
+                        <input type="number" name="coord_y" data-fs-field required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                        <span data-fs-error="coord_y" style="color: #ff5555; font-size: 12px;"></span>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Z Coordinate:</label>
+                        <input type="number" name="coord_z" data-fs-field required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                        <span data-fs-error="coord_z" style="color: #ff5555; font-size: 12px;"></span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Screenshot (Imgur or Discord Link):</label>
+                    <input type="url" name="image_link" data-fs-field required placeholder="https://imgur.com/..." style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                    <span data-fs-error="image_link" style="color: #ff5555; font-size: 12px; display: block; margin-top: 5px;"></span>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Description:</label>
+                    <textarea name="description" data-fs-field rows="5" required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff; resize: vertical;"></textarea>
+                    <span data-fs-error="description" style="color: #ff5555; font-size: 12px; display: block; margin-top: 5px;"></span>
+                </div>
+
+                <button type="submit" data-fs-submit-btn class="pan-button" style="padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer;">Submit for Approval</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Formspree Ajax Integration Scripts -->
+<script>
+  window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
+  formspree('initForm', { formElement: '#location-form', formId: 'mnjwpdbe' });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Server Atlas & Map</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="forum-wrapper">
+    <div class="header">
+        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
+        <h1>Beta 1.7.3 Interactive Atlas</h1>
+    </div>
+
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="atlas-map.html">Atlas & Map</a>
+    </div>
+
+    <div class="content">
+        <div class="search-container">
+            <input type="text" id="searchBar" placeholder="Search locations..." onkeyup="filterLocations()">
+        </div>
+
+        <div class="split-container">
+            <div class="sidebar">
+                <ul id="locationList" class="board-list">
+                </ul>
+            </div>
+            
+            <div class="map-frame-container">
+                <iframe id="mapIframe" src="http://51.81.142.14:8021/#" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="locations.js"></script>
+<script>
+const locationListElement = document.getElementById('locationList');
+const mapIframe = document.getElementById('mapIframe');
+
+function renderLocations() {
+    locationListElement.innerHTML = '';
+    
+    serverLocations.forEach(loc => {
+        const li = document.createElement('li');
+        li.className = 'board-item interactive-item';
+        
+        li.innerHTML = `
+            <div class="icon-placeholder"></div>
+            <div class="board-info">
+                <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
+                <p>${loc.description.substring(0, 60)}...</p>
+                <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z})">View on Map</button>
+            </div>
+        `;
+        locationListElement.appendChild(li);
+    });
+}
+
+function panMap(x, y, z) {
+    const zoomLevel = 6;
+    mapIframe.src = `http://51.81.142.14:8021/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
+}
+
+function filterLocations() {
+    const input = document.getElementById('searchBar').value.toUpperCase();
+    const items = locationListElement.getElementsByTagName('li');
+
+    for (let i = 0; i < items.length; i++) {
+        let h2 = items[i].getElementsByTagName("h2")[0];
+        let txtValue = h2.textContent || h2.innerText;
+        
+        if (txtValue.toUpperCase().indexOf(input) > -1) {
+            items[i].style.display = "";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+}
+
+function checkUrlForCoords() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mapX = urlParams.get('x');
+    const mapY = urlParams.get('y');
+    const mapZ = urlParams.get('z');
+    
+    if (mapX !== null && mapY !== null && mapZ !== null) {
+        panMap(mapX, mapY, mapZ);
+    }
+}
+
+window.onload = function() {
+    renderLocations();
+    checkUrlForCoords();
+};
+</script>
+</body>
+</html>
