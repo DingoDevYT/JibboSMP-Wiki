@@ -24,35 +24,54 @@
         <div class="welcome-box" style="background-color: #262626; padding: 20px; border: 1px solid #444444; margin-bottom: 20px;">
             <h2 style="margin-top: 0; color: #55aaff;">Welcome to the Unofficial Server Wiki</h2>
             <p>This wiki is dedicated to documenting the builds, history, and key locations of our Beta 1.7.3 Minecraft server. Whether you are looking for the nearest marketplace, exploring ancient ruins, or just trying to find your way back to Spawn, we've got you covered.</p>
-            <p><strong>Note:</strong> We are not the server administrators! This is a community-run project to help map out the world.</p>
         </div>
 
         <h3 style="color: #ffffff; border-bottom: 1px solid #444444; padding-bottom: 5px;">Latest Additions</h3>
-        <ul class="board-list">
-            <li class="board-item">
-                <div class="icon-placeholder"></div>
-                <div class="board-info">
-                    <h2><a href="location.html?id=kings_castle">King's Castle Completed</a></h2>
-                    <p>The massive stone fortress in the northern quadrant is finally finished. Check the Interactive Atlas for the exact coordinates!</p>
-                </div>
-            </li>
-            <li class="board-item">
-                <div class="icon-placeholder"></div>
-                <div class="board-info">
-                    <h2><a href="location.html?id=marketplace">New Shops at the Marketplace</a></h2>
-                    <p>Several new diamond and iron exchange stalls have opened up near the southern river.</p>
-                </div>
-            </li>
-            <li class="board-item">
-                <div class="icon-placeholder"></div>
-                <div class="board-info">
-                    <h2><a href="location.html?id=spawn">Spawn Town Guidelines</a></h2>
-                    <p>A quick reminder on the unwritten rules of building within 500 blocks of the Server Spawn.</p>
-                </div>
-            </li>
+        
+        <!-- This empty list is populated by the script below -->
+        <ul id="latestAdditionsList" class="board-list">
+            <li class="board-item" style="color: #999999;">Loading database...</li>
         </ul>
     </div>
 </div>
 
+<script src="locations.js"></script>
+<script>
+function renderLatestAdditions() {
+    const listElement = document.getElementById('latestAdditionsList');
+    listElement.innerHTML = '';
+    
+    // Grab the last 3 items from the database and reverse them so the newest is on top
+    const recentLocations = serverLocations.slice(-3).reverse();
+    
+    if (recentLocations.length === 0) {
+        listElement.innerHTML = '<li class="board-item" style="color: #999;">No locations found.</li>';
+        return;
+    }
+
+    recentLocations.forEach(loc => {
+        const li = document.createElement('li');
+        li.className = 'board-item interactive-item';
+        
+        // Create a short preview of the description
+        let previewDesc = loc.description.substring(0, 90);
+        if (loc.description.length > 90) previewDesc += '...';
+        
+        let authorText = loc.ownerPlayer !== 'N/A' ? loc.ownerPlayer : (loc.ownerGroup !== 'N/A' ? loc.ownerGroup : 'Unknown');
+
+        li.innerHTML = `
+            <div class="icon-placeholder"></div>
+            <div class="board-info">
+                <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
+                <p>${previewDesc}</p>
+                <p style="margin-top: 5px; font-size: 10px; color: #777777;">
+                    Added: ${loc.buildDate} | Built By: <span style="color: #cccccc;">${authorText}</span>
+                </p>
+            </div>
+        `;
+        listElement.appendChild(li);
+    });
+}
+</script>
 </body>
 </html>

@@ -45,6 +45,21 @@
 
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
                     <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Player Name (or N/A):</label>
+                        <input type="text" name="owned_by_player" data-fs-field value="N/A" required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Group/Faction (or N/A):</label>
+                        <input type="text" name="owned_by_group" data-fs-field value="N/A" required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">Build Date:</label>
+                        <input type="text" name="build_date" data-fs-field placeholder="e.g. May 2026" required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                    <div style="flex: 1;">
                         <label style="display: block; color: #ffffff; font-weight: bold; margin-bottom: 5px;">X Coordinate:</label>
                         <input type="number" name="coord_x" data-fs-field required style="width: 100%; padding: 8px; background-color: #1e1e1e; border: 1px solid #555555; color: #ffffff;">
                         <span data-fs-error="coord_x" style="color: #ff5555; font-size: 12px;"></span>
