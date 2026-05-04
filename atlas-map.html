@@ -1,106 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Server Atlas & Map</title>
+<meta charset="UTF-8"><title>Interactive Atlas</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="forum-wrapper">
-    <div class="header">
-        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
-        <h1>Beta 1.7.3 Interactive Atlas</h1>
-    </div>
-
-    <div class="navbar">
-        <a href="index.html">Home</a>
-        <a href="atlas-map.html">Atlas & Map</a>
-        <a href="submit.html">Submit Location</a>
-    </div>
-
+    <div class="header"><img src="assets/server-icon.png" class="logo"><h1>Interactive Atlas</h1></div>
+    <div class="navbar"><a href="index.html">Home</a> <a href="atlas-map.html">Atlas</a> <a href="submit.html">Submit</a></div>
     <div class="content">
-        <div class="search-container">
-            <input type="text" id="searchBar" placeholder="Search locations..." onkeyup="filterLocations()">
-        </div>
-
+        <div class="search-container"><input type="text" id="searchBar" placeholder="Search buildings..." onkeyup="filterLocations()"></div>
         <div class="split-container">
-            <div class="sidebar">
-                <ul id="locationList" class="board-list">
-                    <li class="board-item" style="color: #999999;">Loading database...</li>
-                </ul>
-            </div>
-            
-            <div class="map-wrapper">
-                <iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#" allowfullscreen></iframe>
-            </div>
+            <div class="sidebar"><ul id="locationList" class="board-list"></ul></div>
+            <div class="map-wrapper"><iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe></div>
         </div>
     </div>
 </div>
-
 <script src="locations.js"></script>
 <script>
-let locationListElement;
-
 function renderLocations() {
-    locationListElement = document.getElementById('locationList');
-    locationListElement.innerHTML = '';
-    
-    serverLocations.forEach(loc => {
-        const li = document.createElement('li');
-        li.className = 'board-item interactive-item';
-        li.id = `sidebar-${loc.id}`;
-        
-        const imgUrl = loc.image.startsWith('http') ? loc.image : "assets/" + loc.image;
-
-        li.innerHTML = `
-            <div class="loc-thumb" style="background-image: url('${imgUrl}')"></div>
+    document.getElementById('locationList').innerHTML = serverLocations.map(loc => `
+        <li class="board-item" id="sidebar-${loc.id}">
+            <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
-                <p>X: ${loc.x} Z: ${loc.z}</p>
-                <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">View on Map</button>
+                <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">View</button>
             </div>
-        `;
-        locationListElement.appendChild(li);
-    });
-    
-    checkUrlForCoords();
+        </li>
+    `).join('');
+    const p = new URLSearchParams(window.location.search);
+    if(p.get('x')) panMap(p.get('x'), p.get('y'), p.get('z'));
 }
-
 function panMap(x, y, z, id) {
-    const mapIframe = document.getElementById('mapIframe');
-    const zoomLevel = 6;
-    mapIframe.src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
-    
-    // Selection logic
+    document.getElementById('mapIframe').src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=6`;
     document.querySelectorAll('.board-item').forEach(el => el.classList.remove('selected-location'));
-    const target = document.getElementById(`sidebar-${id}`);
-    if (target) {
-        target.classList.add('selected-location');
-        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if(id) document.getElementById('sidebar-' + id)?.classList.add('selected-location');
 }
-
 function filterLocations() {
-    const input = document.getElementById('searchBar').value.toUpperCase();
-    const items = locationListElement.getElementsByTagName('li');
-    for (let i = 0; i < items.length; i++) {
-        let h2 = items[i].getElementsByTagName("h2")[0];
-        if (h2.textContent.toUpperCase().indexOf(input) > -1) {
-            items[i].style.display = "";
-        } else {
-            items[i].style.display = "none";
-        }
-    }
-}
-
-function checkUrlForCoords() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const mapX = urlParams.get('x');
-    const mapY = urlParams.get('y');
-    const mapZ = urlParams.get('z');
-    if (mapX && mapY && mapZ) panMap(mapX, mapY, mapZ);
+    const q = document.getElementById('searchBar').value.toUpperCase();
+    document.querySelectorAll('#locationList li').forEach(li => {
+        li.style.display = li.innerText.toUpperCase().includes(q) ? "" : "none";
+    });
 }
 </script>
 </body>

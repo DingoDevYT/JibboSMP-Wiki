@@ -1,67 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Location Details</title>
+<meta charset="UTF-8"><title>Location Details</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="forum-wrapper">
     <div class="header">
-        <img src="assets/server-icon.png" alt="Logo" class="logo">
+        <img src="assets/server-icon.png" class="logo">
         <h1 id="locTitle">Loading...</h1>
     </div>
-
-    <div class="navbar">
-        <a href="index.html">Home</a>
-        <a href="atlas-map.html">Atlas</a>
-        <button id="editBtn" class="pan-button" style="margin-left:auto;">Edit Page</button>
-    </div>
-
+    <div class="navbar"><a href="index.html">Home</a> <a href="atlas-map.html">Atlas</a> <button id="editBtn" class="pan-button" style="margin-left:auto;">Edit Location</button></div>
     <div class="content" id="locationContent" style="display:none;">
         <div style="display: flex; gap: 20px;">
             <div style="flex: 0 0 400px;">
-                <img id="locImage" style="width: 100%; border: 2px solid #555;">
-                <div style="background: #1e1e1e; padding: 10px; margin-top: 10px;">
-                    <p id="locCoords"></p>
-                    <p id="ownerLink" style="margin-top:5px;"></p>
+                <img id="locImage" style="width: 100%; border: 2px solid #555; image-rendering: pixelated;">
+                <div style="background: #1e1e1e; padding: 15px; margin-top: 10px; border: 1px solid #444;">
+                    <p id="locCoords" style="font-family: monospace;"></p>
+                    <p id="ownerLink" style="margin-top:10px;"></p>
                 </div>
             </div>
             <div style="flex-grow: 1;">
-                <h3>History & Description</h3>
+                <h3 style="color:#55aaff; border-bottom:1px solid #444;">History</h3>
                 <p id="locDesc" style="line-height: 1.6;"></p>
             </div>
         </div>
     </div>
 </div>
-
 <script src="locations.js"></script>
 <script>
 function renderLocationDetails() {
     const id = new URLSearchParams(window.location.search).get('id');
     const loc = serverLocations.find(l => l.id === id);
+    if (!loc) return;
+    document.getElementById('locationContent').style.display = 'block';
+    document.getElementById('locTitle').innerText = loc.name;
+    document.getElementById('locImage').src = loc.image;
+    document.getElementById('locDesc').innerText = loc.description;
+    document.getElementById('locCoords').innerText = `Coords: ${loc.x}, ${loc.y}, ${loc.z} | Built: ${loc.buildDate}`;
 
-    if (loc) {
-        document.getElementById('locationContent').style.display = 'block';
-        document.getElementById('locTitle').innerText = loc.name;
-        document.getElementById('locImage').src = loc.image;
-        document.getElementById('locDesc').innerText = loc.description;
-        document.getElementById('locCoords').innerText = `X: ${loc.x} Y: ${loc.y} Z: ${loc.z}`;
-        
-        // Auto-linking Logic
-        let ownerHtml = "Built By: ";
-        const player = serverPlayers.find(p => p.name === loc.ownerPlayer);
-        const group = serverGroups.find(g => g.name === loc.ownerGroup);
-
-        if (player) ownerHtml += `<a href="player.html?id=${player.id}" style="color:#55aaff;">${player.name}</a>`;
-        else if (group) ownerHtml += `<a href="group.html?id=${group.id}" style="color:#55aaff;">${group.name}</a>`;
-        else ownerHtml += loc.ownerPlayer || loc.ownerGroup || "Unknown";
-
-        document.getElementById('ownerLink').innerHTML = ownerHtml;
-        document.getElementById('editBtn').onclick = () => window.location.href = `submit.html?edit=${loc.id}`;
-    }
+    let linkHtml = "Built By: ";
+    const p = serverPlayers.find(x => x.name === loc.ownerPlayer);
+    const g = serverGroups.find(x => x.name === loc.ownerGroup);
+    if (p) linkHtml += `<a href="player.html?id=${p.id}" style="color:#55aaff;">${p.name}</a>`;
+    else if (g) linkHtml += `<a href="group.html?id=${g.id}" style="color:#55aaff;">${g.name}</a>`;
+    else linkHtml += (loc.ownerPlayer || loc.ownerGroup || "Unknown");
+    
+    document.getElementById('ownerLink').innerHTML = linkHtml;
+    document.getElementById('editBtn').onclick = () => window.location.href = `submit.html?type=location&edit=${loc.id}`;
 }
 </script>
 </body>

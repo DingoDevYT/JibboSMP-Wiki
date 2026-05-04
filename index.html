@@ -3,66 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Beta 1.7.3 Server Wiki - Home</title>
+<title>Jibbo's Beta 1.7.3 MC</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <div class="forum-wrapper">
     <div class="header">
-        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
-        <h1>Beta 1.7.3 Server Wiki</h1>
+        <img src="assets/server-icon.png" alt="Logo" class="logo">
+        <h1>Server Wiki</h1>
     </div>
-
     <div class="navbar">
         <a href="index.html">Home</a>
-        <a href="atlas-map.html">Interactive Atlas</a>
-        <a href="submit.html">Submit Location</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
     </div>
-
     <div class="content">
-        <div class="welcome-box" style="background-color: #262626; padding: 20px; border: 1px solid #444444; margin-bottom: 20px;">
-            <h2 style="margin-top: 0; color: #55aaff;">Welcome to the Unofficial Server Wiki</h2>
-            <p>This wiki documents the builds and history of our Beta 1.7.3 server. Use the tabs above to explore the map or submit your own home!</p>
-        </div>
-
-        <h3 style="color: #ffffff; border-bottom: 1px solid #444444; padding-bottom: 5px;">Latest Additions</h3>
-        <ul id="latestAdditionsList" class="board-list">
-            <li class="board-item" style="color: #999999;">Loading database...</li>
-        </ul>
+        <h3 style="color: #fff; border-bottom: 1px solid #444;">Recently Approved Builds</h3>
+        <ul id="latestAdditionsList" class="board-list"></ul>
     </div>
 </div>
-
 <script src="locations.js"></script>
 <script>
 function renderLatestAdditions() {
-    const listElement = document.getElementById('latestAdditionsList');
-    listElement.innerHTML = '';
-    
-    const recentLocations = serverLocations.slice(-3).reverse();
-    
-    if (recentLocations.length === 0) {
-        listElement.innerHTML = '<li class="board-item" style="color: #999;">No locations found.</li>';
-        return;
-    }
-
-    recentLocations.forEach(loc => {
-        const li = document.createElement('li');
-        li.className = 'board-item interactive-item';
-        const imgUrl = loc.image.startsWith('http') ? loc.image : "assets/" + loc.image;
-
-        li.innerHTML = `
-            <div class="loc-thumb" style="background-image: url('${imgUrl}')"></div>
+    const list = document.getElementById('latestAdditionsList');
+    list.innerHTML = serverLocations.slice(-5).reverse().map(loc => `
+        <li class="board-item">
+            <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
-                <p>${loc.description.substring(0, 90)}...</p>
-                <p style="margin-top: 5px; font-size: 10px; color: #777777;">
-                    Added: ${loc.buildDate} | Built By: ${loc.ownerPlayer !== 'N/A' ? loc.ownerPlayer : 'Community'}
-                </p>
+                <p>${loc.description.substring(0, 100)}...</p>
             </div>
-        `;
-        listElement.appendChild(li);
-    });
+        </li>
+    `).join('');
 }
 </script>
 </body>

@@ -4,9 +4,9 @@ let serverGroups = [];
 
 const BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSd_knG9JWDn5KdFZ98mLTYBSiUCXZSFxuT9-kqy7hAIfEXwy0Nb--B_AdTqoe1V3oyzK4JjL9UD5U3/pub?";
 const URLS = {
-    locations: BASE_URL + "gid=0&single=true&output=csv", // Jibbo MC Server - Locations - Locations.csv
-    players: BASE_URL + "gid=YOUR_PLAYER_GID&single=true&output=csv", // Jibbo MC Server - Locations - Players.csv
-    groups: BASE_URL + "gid=YOUR_GROUP_GID&single=true&output=csv"  // Jibbo MC Server - Locations - Groups.csv
+    locations: BASE_URL + "gid=0&single=true&output=csv",
+    players: BASE_URL + "gid=581054914&single=true&output=csv",
+    groups: BASE_URL + "gid=332466894&single=true&output=csv"
 };
 
 function parseCSV(csvText, type) {
@@ -51,10 +51,11 @@ async function loadAllData() {
         serverPlayers = parseCSV(await playRes.text(), 'players');
         serverGroups = parseCSV(await groupRes.text(), 'groups');
 
-        // Refresh UI
         if (typeof renderLatestAdditions === 'function') renderLatestAdditions();
         if (typeof renderLocations === 'function') renderLocations();
         if (typeof renderLocationDetails === 'function') renderLocationDetails();
+        if (typeof renderPlayerDetails === 'function') renderPlayerDetails();
+        if (typeof renderGroupDetails === 'function') renderGroupDetails();
         if (typeof populateDropdowns === 'function') populateDropdowns();
         if (typeof checkEditMode === 'function') checkEditMode();
     } catch (e) { console.error("Database Error:", e); }

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><title>Player Profile</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="forum-wrapper">
+    <div class="header">
+        <img src="assets/server-icon.png" class="logo">
+        <h1 id="playerName">Loading...</h1>
+    </div>
+    <div class="navbar"><a href="index.html">Home</a> <a href="atlas-map.html">Atlas</a> <button id="editBtn" class="pan-button" style="margin-left:auto;">Edit Profile</button></div>
+    <div class="content" id="playerContent" style="display:none;">
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 0 0 300px;">
+                <img id="playerImage" style="width: 100%; border: 2px solid #555; image-rendering: pixelated;">
+                <div style="background: #1e1e1e; padding: 15px; margin-top: 10px;">
+                    <p id="joinDate"></p>
+                    <p id="groupLink" style="margin-top:10px;"></p>
+                </div>
+            </div>
+            <div style="flex-grow: 1;">
+                <h3 style="color:#55aaff; border-bottom:1px solid #444;">Player Bio</h3>
+                <p id="playerDesc"></p>
+                <h3 style="color:#55aaff; border-bottom:1px solid #444; margin-top:30px;">Builds</h3>
+                <ul id="builds" class="board-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="locations.js"></script>
+<script>
+function renderPlayerDetails() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    const player = serverPlayers.find(p => p.id === id);
+    if (!player) return;
+    document.getElementById('playerContent').style.display = 'block';
+    document.getElementById('playerName').innerText = player.name;
+    document.getElementById('playerImage').src = player.image;
+    document.getElementById('playerDesc').innerText = player.description;
+    document.getElementById('joinDate').innerText = "Joined: " + player.joinDate;
+
+    const g = serverGroups.find(x => x.name === player.group);
+    document.getElementById('groupLink').innerHTML = g ? `Faction: <a href="group.html?id=${g.id}" style="color:#55aaff;">${g.name}</a>` : "Faction: None";
+
+    const builds = serverLocations.filter(l => l.ownerPlayer === player.name);
+    document.getElementById('builds').innerHTML = builds.map(b => `<li class="board-item"><a href="location.html?id=${b.id}" style="color:#55aaff;">${b.name}</a></li>`).join('') || "No builds listed.";
+    document.getElementById('editBtn').onclick = () => window.location.href = `submit.html?type=player&edit=${player.id}`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Group Info - Server Wiki</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="forum-wrapper">
+    <div class="header">
+        <img src="assets/server-icon.png" alt="Logo" class="logo">
+        <h1 id="groupName">Loading Group...</h1>
+    </div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="atlas-map.html">Atlas</a>
+        <button id="editBtn" class="pan-button" style="margin-left:auto;">Edit Group</button>
+    </div>
+    <div class="content" id="groupContent" style="display:none;">
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 0 0 300px;">
+                <img id="groupImage" style="width: 100%; border: 2px solid #555; image-rendering: pixelated;">
+                <div style="background: #1e1e1e; padding: 15px; margin-top: 10px; border: 1px solid #444;">
+                    <p id="foundDate" style="font-size:14px;"></p>
+                    <p id="leaderLink" style="margin-top:10px;"></p>
+                </div>
+            </div>
+            <div style="flex-grow: 1;">
+                <h3 style="color:#55aaff; border-bottom:1px solid #444; padding-bottom:5px;">History</h3>
+                <p id="groupDesc" style="line-height: 1.6;"></p>
+                
+                <h3 style="color:#55aaff; border-bottom:1px solid #444; padding-bottom:5px; margin-top:30px;">Members</h3>
+                <ul id="memberList" class="board-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="locations.js"></script>
+<script>
+function renderGroupDetails() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    const group = serverGroups.find(g => g.id === id);
+    if (!group) return;
+
+    document.getElementById('groupContent').style.display = 'block';
+    document.getElementById('groupName').innerText = group.name;
+    document.getElementById('groupImage').src = group.image;
+    document.getElementById('groupDesc').innerText = group.description;
+    document.getElementById('foundDate').innerText = "Founded: " + group.foundingDate;
+
+    // Link to Leader
+    const leader = serverPlayers.find(p => p.name === group.leader);
+    document.getElementById('leaderLink').innerHTML = leader ? 
+        `Leader: <a href="player.html?id=${leader.id}" style="color:#55aaff;">${leader.name}</a>` : "Leader: Unknown";
+
+    // List Members
+    const members = serverPlayers.filter(p => p.group === group.name);
+    document.getElementById('memberList').innerHTML = members.map(m => `
+        <li class="board-item">
+            <a href="player.html?id=${m.id}" style="color:#55aaff;">${m.name}</a>
+        </li>
+    `).join('') || "No members found.";
+
+    document.getElementById('editBtn').onclick = () => window.location.href = `submit.html?type=group&edit=${group.id}`;
+}
+</script>
+</body>
+</html>

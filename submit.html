@@ -3,14 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Submit - Server Wiki</title>
+<title>Wiki Submissions - Beta 1.7.3</title>
 <link rel="stylesheet" href="style.css">
 <style>
     .tab-container { display: flex; gap: 5px; margin-bottom: -2px; }
-    .tab { padding: 10px 20px; background: #262626; border: 2px solid #555; border-bottom: none; cursor: pointer; color: #777; }
-    .tab.active { background: #4a5d23; color: white; border-color: #555; }
+    .tab { padding: 10px 20px; background: #262626; border: 2px solid #555; border-bottom: none; cursor: pointer; color: #777; font-weight: bold; }
+    .tab.active { background: #4a5d23; color: white; }
     .form-section { display: none; background: #262626; border: 2px solid #555; padding: 20px; }
     .form-section.active { display: block; }
+    label { display: block; margin-top: 15px; font-weight: bold; color: #55aaff; }
+    input, textarea { width: 100%; padding: 10px; background: #1e1e1e; border: 1px solid #555; color: #fff; margin-top: 5px; box-sizing: border-box; }
 </style>
 </head>
 <body>
@@ -18,7 +20,7 @@
 <div class="forum-wrapper">
     <div class="header">
         <img src="assets/server-icon.png" alt="Logo" class="logo">
-        <h1 id="pageTitle">Submit to Wiki</h1>
+        <h1 id="formTitle">Wiki Submission Hub</h1>
     </div>
 
     <div class="navbar">
@@ -29,32 +31,57 @@
 
     <div class="content">
         <div class="tab-container">
-            <div class="tab active" onclick="switchTab('location')">Location</div>
-            <div class="tab" onclick="switchTab('player')">Player</div>
-            <div class="tab" onclick="switchTab('group')">Group</div>
+            <div class="tab active" id="tab-location" onclick="switchTab('location')">Location</div>
+            <div class="tab" id="tab-player" onclick="switchTab('player')">Player</div>
+            <div class="tab" id="tab-group" onclick="switchTab('group')">Group</div>
         </div>
 
-        <div id="location" class="form-section active">
-            <form id="form-location">
+        <!-- Location Section -->
+        <div id="section-location" class="form-section active">
+            <form class="wiki-form">
                 <input type="hidden" name="entry_type" value="location">
                 <label>Location Name: <input type="text" name="location_name" required></label>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <label>Owner (Player): <input type="text" name="owned_by_player" list="playerList"></label>
-                    <label>Owner (Group): <input type="text" name="owned_by_group" list="groupList"></label>
+                <div style="display:flex; gap:10px;">
+                    <label style="flex:1;">Builder (Player): <input type="text" name="owned_by_player" list="playerList" value="N/A"></label>
+                    <label style="flex:1;">Faction (Group): <input type="text" name="owned_by_group" list="groupList" value="N/A"></label>
                 </div>
-                <div style="display:flex; gap:10px; margin-top:10px;">
-                    <label>X: <input type="number" name="coord_x" required></label>
-                    <label>Y: <input type="number" name="coord_y" required></label>
-                    <label>Z: <input type="number" name="coord_z" required></label>
+                <div style="display:flex; gap:10px;">
+                    <label style="flex:1;">X: <input type="number" name="coord_x" required></label>
+                    <label style="flex:1;">Y: <input type="number" name="coord_y" required></label>
+                    <label style="flex:1;">Z: <input type="number" name="coord_z" required></label>
                 </div>
-                <label>Build Date: <input type="text" name="build_date"></label>
-                <label>Image URL: <input type="url" name="image_link" required></label>
+                <label>Build Date: <input type="text" name="build_date" placeholder="e.g. May 4, 2026"></label>
+                <label>Image URL (Imgur/Discord): <input type="url" name="image_link" required></label>
                 <label>Description: <textarea name="description" rows="5" required></textarea></label>
-                <button type="submit" class="pan-button">Submit Location</button>
+                <button type="submit" class="pan-button" style="margin-top:20px; font-size:16px;">Send for Approval</button>
             </form>
         </div>
 
-        <!-- Player & Group Sections follow same pattern... -->
+        <!-- Player Section -->
+        <div id="section-player" class="form-section">
+            <form class="wiki-form">
+                <input type="hidden" name="entry_type" value="player">
+                <label>Username: <input type="text" name="player_name" required></label>
+                <label>Join Date: <input type="text" name="join_date"></label>
+                <label>Current Group: <input type="text" name="group_name" list="groupList" value="N/A"></label>
+                <label>Skin/Avatar Image URL: <input type="url" name="image_link" required></label>
+                <label>Player Bio: <textarea name="description" rows="5" required></textarea></label>
+                <button type="submit" class="pan-button" style="margin-top:20px;">Register Player</button>
+            </form>
+        </div>
+
+        <!-- Group Section -->
+        <div id="section-group" class="form-section">
+            <form class="wiki-form">
+                <input type="hidden" name="entry_type" value="group">
+                <label>Group Name: <input type="text" name="group_name" required></label>
+                <label>Founded Date: <input type="text" name="founding_date"></label>
+                <label>Leader: <input type="text" name="leader_name" list="playerList" value="N/A"></label>
+                <label>Group Banner/Logo URL: <input type="url" name="image_link" required></label>
+                <label>Group History: <textarea name="description" rows="5" required></textarea></label>
+                <button type="submit" class="pan-button" style="margin-top:20px;">Create Group</button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -63,46 +90,72 @@
 
 <script src="locations.js"></script>
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxmma5LHgkTA__mCV2pzYJ-xIVYZOLQiTlzrRkCj0b0VVGSpIa2rZ24wJ2v3xaMJpmd/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwqPk87YUs28POOGi8nhBoUVv8s0Du61HY1Dc8O3is5e5tNjhawT3cASCn-pGT-5yl5/exec';
 
     function switchTab(type) {
         document.querySelectorAll('.tab, .form-section').forEach(el => el.classList.remove('active'));
-        document.querySelector(`.tab[onclick="switchTab('${type}')"]`).classList.add('active');
-        document.getElementById(type).classList.add('active');
+        document.getElementById('tab-' + type).classList.add('active');
+        document.getElementById('section-' + type).classList.add('active');
     }
 
     function populateDropdowns() {
-        const pList = document.getElementById('playerList');
-        const gList = document.getElementById('groupList');
-        pList.innerHTML = serverPlayers.map(p => `<option value="${p.name}">`).join('');
-        gList.innerHTML = serverGroups.map(g => `<option value="${g.name}">`).join('');
+        document.getElementById('playerList').innerHTML = serverPlayers.map(p => `<option value="${p.name}">`).join('');
+        document.getElementById('groupList').innerHTML = serverGroups.map(g => `<option value="${g.name}">`).join('');
     }
 
     function checkEditMode() {
         const params = new URLSearchParams(window.location.search);
-        const editId = params.get('edit');
-        if (editId) {
-            const data = serverLocations.find(l => l.id === editId);
-            if (data) {
-                document.getElementById('pageTitle').innerText = "Editing: " + data.name;
-                const f = document.getElementById('form-location');
+        const type = params.get('type') || 'location';
+        const id = params.get('edit');
+        if (!id) return;
+
+        switchTab(type);
+        let data = null;
+        if (type === 'location') data = serverLocations.find(l => l.id === id);
+        if (type === 'player') data = serverPlayers.find(p => p.id === id);
+        if (type === 'group') data = serverGroups.find(g => g.id === id);
+
+        if (data) {
+            document.getElementById('formTitle').innerText = "Editing: " + data.name;
+            const f = document.querySelector(`#section-${type} form`);
+            if (type === 'location') {
                 f.location_name.value = data.name;
                 f.owned_by_player.value = data.ownerPlayer;
                 f.owned_by_group.value = data.ownerGroup;
                 f.coord_x.value = data.x; f.coord_y.value = data.y; f.coord_z.value = data.z;
                 f.build_date.value = data.buildDate;
-                f.image_link.value = data.image;
-                f.description.value = data.description;
+            } else if (type === 'player') {
+                f.player_name.value = data.name;
+                f.join_date.value = data.joinDate;
+                f.group_name.value = data.group;
+            } else if (type === 'group') {
+                f.group_name.value = data.name;
+                f.founding_date.value = data.foundingDate;
+                f.leader_name.value = data.leader;
             }
+            f.image_link.value = data.image;
+            f.description.value = data.description;
         }
     }
 
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', e => {
             e.preventDefault();
+            const btn = form.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Transmitting...";
+            btn.disabled = true;
+
             fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-            .then(() => alert("Submitted for approval!"))
-            .catch(err => console.error(err));
+            .then(() => { 
+                alert("Success! Entry sent to approval queue."); 
+                location.href = "index.html"; 
+            })
+            .catch(err => {
+                alert("Error: " + err);
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
         });
     });
 </script>
