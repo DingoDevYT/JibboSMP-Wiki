@@ -1,17 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Group Info</title><link rel="stylesheet" href="style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Group Info</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Beta 1.7.3 Wiki</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Beta 1.7.3 Wiki</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
-            <div style="flex: 0 0 300px;"><img id="groupImage" style="width: 100%; border: 2px solid #555;"><button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Group</button></div>
-            <div style="flex-grow: 1;"><h1 id="groupName" style="color: #55aaff; margin-top: 0;"></h1><p>Founded: <span id="foundDate"></span></p><div class="board-header">History</div><p id="groupDesc" style="line-height: 1.6;"></p><div class="board-header">Members</div><div id="memberList"></div></div>
+            <div style="flex: 0 0 300px;">
+                <img id="groupImage" style="width: 100%; border: 2px solid #555; background: #111;">
+                <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Group</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <h1 id="groupName" style="color: #55aaff; margin-top: 0;"></h1>
+                <p style="font-weight: bold; color: #777;">Founded: <span id="foundDate"></span></p>
+                <div class="board-header">History</div>
+                <p id="groupDesc" style="line-height: 1.6; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 20px;"></p>
+                <div class="board-header">Members</div>
+                <div id="memberList"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -21,13 +46,27 @@ window.renderPage = function() {
     const id = new URLSearchParams(window.location.search).get('id');
     const group = serverGroups.find(g => g.id === id);
     if (!group) return;
+    
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('groupName').innerText = group.name;
     document.getElementById('groupImage').src = group.image;
     document.getElementById('groupDesc').innerText = group.description;
     document.getElementById('foundDate').innerText = group.foundingDate;
+    
     const m = serverPlayers.filter(p => p.group.toLowerCase() === group.name.toLowerCase());
-    document.getElementById('memberList').innerHTML = m.map(item => `<p><a href="player.html?id=${item.id}" style="color:#55aaff;">${item.name}</a></p>`).join('') || "No members found.";
+    document.getElementById('memberList').innerHTML = m.map(item => {
+        const isOnline = onlinePlayers.includes(item.name.toLowerCase());
+        const badge = isOnline ? `<span class="status-badge status-online" style="margin-left: 10px;">🟢</span>` : ``;
+        return `
+        <div class="board-item">
+            <div class="loc-thumb" style="width: 48px; height: 48px; background-image: url('${item.image}')"></div>
+            <div class="board-info">
+                <h2 style="margin-top:10px;"><a href="player.html?id=${item.id}">${item.name}</a> ${badge}</h2>
+            </div>
+        </div>
+        `;
+    }).join('') || "<div class='board-item'><p>No members found.</p></div>";
+    
     document.getElementById('editBtn').onclick = () => location.href = `submit.html?type=group&edit=${group.id}`;
 };
 </script>

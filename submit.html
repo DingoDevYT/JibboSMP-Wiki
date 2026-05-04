@@ -1,32 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Submit</title><link rel="stylesheet" href="style.css">
-<style>.tab-container{display:flex;gap:5px;margin-bottom:-2px}.tab{padding:10px 20px;background:#262626;border:2px solid #555;border-bottom:none;cursor:pointer;color:#777;font-weight:bold}.tab.active{background:#4a5d23;color:#fff}.form-section{display:none;background:#262626;border:2px solid #555;padding:20px}.form-section.active{display:block}label{display:block;margin-top:15px;font-weight:bold;color:#55aaff}input,textarea{width:100%;padding:10px;background:#1e1e1e;border:1px solid #555;color:#fff;margin-top:5px;box-sizing:border-box}</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Submit</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Submit Hub</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Submit Hub</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content">
-        <div class="tab-container"><div class="tab active" id="tab-location" onclick="switchTab('location')">Location</div><div class="tab" id="tab-player" onclick="switchTab('player')">Player</div><div class="tab" id="tab-group" onclick="switchTab('group')">Group</div></div>
+        <p style="color: #999; margin-top: 0;">Leave "Image URL" as <strong>N/A</strong> to auto-generate a Minecraft face based on the name.</p>
+        <div class="dir-tabs">
+            <div class="dir-tab active" id="tab-location" onclick="switchTab('location')">Location</div>
+            <div class="dir-tab" id="tab-player" onclick="switchTab('player')">Player</div>
+            <div class="dir-tab" id="tab-group" onclick="switchTab('group')">Group</div>
+        </div>
         
-        <div id="section-location" class="form-section active"><form class="wiki-form"><input type="hidden" name="entry_type" value="location"><label>Name: <input type="text" name="location_name" required></label><div style="display:flex;gap:10px;"><label style="flex:1;">Player: <input type="text" name="owned_by_player" list="playerList" value="N/A"></label><label style="flex:1;">Group: <input type="text" name="owned_by_group" list="groupList" value="N/A"></label></div><div style="display:flex;gap:10px;"><label style="flex:1;">X: <input type="number" name="coord_x" required></label><label style="flex:1;">Y: <input type="number" name="coord_y" required></label><label style="flex:1;">Z: <input type="number" name="coord_z" required></label></div><label>Image: <input type="url" name="image_link" required></label><label>Description: <textarea name="description" rows="5" required></textarea></label><button type="submit" class="pan-button" style="margin-top:20px;">Submit</button></form></div>
+        <div id="section-location" class="dir-section active">
+            <form class="wiki-form">
+                <input type="hidden" name="entry_type" value="location">
+                <label>Name: <input type="text" name="location_name" required></label>
+                <div style="display:flex; gap:10px;">
+                    <label style="flex:1;">Player: <input type="text" name="owned_by_player" list="playerList" value="N/A"></label>
+                    <label style="flex:1;">Group: <input type="text" name="owned_by_group" list="groupList" value="N/A"></label>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <label style="flex:1;">X: <input type="number" name="coord_x" required></label>
+                    <label style="flex:1;">Y: <input type="number" name="coord_y" required></label>
+                    <label style="flex:1;">Z: <input type="number" name="coord_z" required></label>
+                </div>
+                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>Description: <textarea name="description" rows="5" required></textarea></label>
+                <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
+            </form>
+        </div>
         
-        <div id="section-player" class="form-section"><form class="wiki-form"><input type="hidden" name="entry_type" value="player"><label>Username: <input type="text" name="player_name" required></label><label>Group: <input type="text" name="group_name" list="groupList" value="N/A"></label><label>Image: <input type="url" name="image_link" required></label><label>Bio: <textarea name="description" rows="5" required></textarea></label><button type="submit" class="pan-button" style="margin-top:20px;">Submit</button></form></div>
+        <div id="section-player" class="dir-section">
+            <form class="wiki-form">
+                <input type="hidden" name="entry_type" value="player">
+                <label>Username: <input type="text" name="player_name" required></label>
+                <label>Group: <input type="text" name="group_name" list="groupList" value="N/A"></label>
+                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>Bio: <textarea name="description" rows="5" required></textarea></label>
+                <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
+            </form>
+        </div>
         
-        <div id="section-group" class="form-section"><form class="wiki-form"><input type="hidden" name="entry_type" value="group"><label>Name: <input type="text" name="group_name" required></label><label>Leader: <input type="text" name="leader_name" list="playerList" value="N/A"></label><label>Image: <input type="url" name="image_link" required></label><label>History: <textarea name="description" rows="5" required></textarea></label><button type="submit" class="pan-button" style="margin-top:20px;">Submit</button></form></div>
+        <div id="section-group" class="dir-section">
+            <form class="wiki-form">
+                <input type="hidden" name="entry_type" value="group">
+                <label>Name: <input type="text" name="group_name" required></label>
+                <label>Leader: <input type="text" name="leader_name" list="playerList" value="N/A"></label>
+                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>History: <textarea name="description" rows="5" required></textarea></label>
+                <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
+            </form>
+        </div>
     </div>
 </div>
-<datalist id="playerList"></datalist><datalist id="groupList"></datalist>
+<datalist id="playerList"></datalist>
+<datalist id="groupList"></datalist>
 <script src="locations.js"></script>
 <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbwqPk87YUs28POOGi8nhBoUVv8s0Du61HY1Dc8O3is5e5tNjhawT3cASCn-pGT-5yl5/exec';
-    function switchTab(type) { document.querySelectorAll('.tab, .form-section').forEach(el => el.classList.remove('active')); document.getElementById('tab-' + type).classList.add('active'); document.getElementById('section-' + type).classList.add('active'); }
-    function populateDropdowns() { document.getElementById('playerList').innerHTML = serverPlayers.map(p => `<option value="${p.name}">`).join(''); document.getElementById('groupList').innerHTML = serverGroups.map(g => `<option value="${g.name}">`).join(''); }
-    function checkEditMode() {
+    
+    function switchTab(type) { 
+        document.querySelectorAll('.dir-tab, .dir-section').forEach(el => el.classList.remove('active')); 
+        document.getElementById('tab-' + type).classList.add('active'); 
+        document.getElementById('section-' + type).classList.add('active'); 
+    }
+    
+    function populateDropdowns() { 
+        document.getElementById('playerList').innerHTML = serverPlayers.map(p => `<option value="${p.name}">`).join(''); 
+        document.getElementById('groupList').innerHTML = serverGroups.map(g => `<option value="${g.name}">`).join(''); 
+    }
+    
+    window.renderPage = function() {
         const p = new URLSearchParams(window.location.search);
         const type = p.get('type') || 'location';
         const id = p.get('edit');
@@ -40,7 +104,8 @@
             else { f.group_name.value = data.name; f.leader_name.value = data.leader; }
             f.image_link.value = data.image; f.description.value = data.description;
         }
-    }
+    };
+    
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', e => {
             e.preventDefault();

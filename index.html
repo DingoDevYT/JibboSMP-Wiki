@@ -1,16 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Server Wiki - Home</title><link rel="stylesheet" href="style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Server Wiki - Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Beta 1.7.3 Wiki</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search Wiki..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Beta 1.7.3 Wiki</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search Wiki..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Interactive Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content">
-        <div style="background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 25px;"><h2 style="margin: 0; color: #55aaff;">Welcome</h2><p>Documenting the history of our Beta 1.7.3 server.</p></div>
-        <div class="board-header">Recent Builds</div>
+        <div style="background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 25px;">
+            <h2 style="margin: 0 0 10px 0; color: #55aaff;">Server Bulletin</h2>
+            <p style="margin: 0;">Welcome to the community archive for the Beta 1.7.3 SMP. Use the Directory to browse players and factions, or check the Atlas to view the live map.</p>
+        </div>
+        <div class="board-header">Recent Approved Builds</div>
         <div id="latestBuilds"></div>
     </div>
 </div>
@@ -20,7 +38,10 @@ window.renderPage = function() {
     document.getElementById('latestBuilds').innerHTML = serverLocations.slice(-5).reverse().map(loc => `
         <div class="board-item">
             <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
-            <div class="board-info"><h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2><p>${loc.description.substring(0, 150)}...</p></div>
+            <div class="board-info">
+                <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
+                <p>${loc.description.substring(0, 150)}...</p>
+            </div>
         </div>
     `).join('');
 };

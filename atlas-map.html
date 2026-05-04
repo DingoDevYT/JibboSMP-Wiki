@@ -1,17 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Interactive Atlas</title><link rel="stylesheet" href="style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Atlas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Interactive Atlas</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Interactive Atlas</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search buildings..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content">
         <div class="split-container">
-            <div class="sidebar"><ul id="locationList" class="board-list"></ul></div>
-            <div class="map-wrapper"><iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe></div>
+            <div class="sidebar">
+                <ul id="locationList" style="list-style: none; margin: 0; padding: 0;"></ul>
+            </div>
+            <div class="map-wrapper">
+                <iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe>
+            </div>
         </div>
     </div>
 </div>
@@ -19,18 +38,26 @@
 <script>
 window.renderPage = function() {
     document.getElementById('locationList').innerHTML = serverLocations.map(loc => `
-        <li class="board-item interactive-item" id="sidebar-${loc.id}">
+        <li class="board-item" id="sidebar-${loc.id}" style="cursor: pointer;" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">
             <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
-            <div class="board-info"><h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2><button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">View</button></div>
+            <div class="board-info">
+                <h2 style="margin-top: 5px; color: #55aaff;">${loc.name}</h2>
+                <p>X: ${loc.x} Z: ${loc.z}</p>
+            </div>
         </li>
     `).join('');
+    
     const p = new URLSearchParams(window.location.search);
     if(p.get('x')) panMap(p.get('x'), p.get('y'), p.get('z'));
 };
+
 function panMap(x, y, z, id) {
     document.getElementById('mapIframe').src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=6`;
-    document.querySelectorAll('.board-item').forEach(el => el.classList.remove('selected-location'));
-    if(id) document.getElementById('sidebar-' + id)?.classList.add('selected-location');
+    document.querySelectorAll('.board-item').forEach(el => el.style.background = '#262626');
+    if(id) {
+        const target = document.getElementById('sidebar-' + id);
+        if(target) target.style.background = '#3a4a1c';
+    }
 }
 </script>
 </body>

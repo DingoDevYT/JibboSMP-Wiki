@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Directory</title><link rel="stylesheet" href="style.css">
-<style>.dir-tabs { display: flex; gap: 5px; margin-bottom: 20px; }.dir-tab { background: #333; padding: 10px 20px; cursor: pointer; border: 1px solid #444; color: #777; font-weight: bold; }.dir-tab.active { background: #4a5d23; color: #fff; }.dir-section { display: none; }.dir-section.active { display: block; }</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Server Directory</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Server Directory</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Server Directory</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content">
-        <div class="dir-tabs"><div class="dir-tab active" onclick="switchDir('locations')">Locations</div><div class="dir-tab" onclick="switchDir('players')">Players</div><div class="dir-tab" onclick="switchDir('groups')">Groups</div></div>
-        <div id="sec-locations" class="dir-section active"></div><div id="sec-players" class="dir-section"></div><div id="sec-groups" class="dir-section"></div>
+        <div class="dir-tabs">
+            <div class="dir-tab active" onclick="switchDir('locations')">Locations</div>
+            <div class="dir-tab" onclick="switchDir('players')">Players</div>
+            <div class="dir-tab" onclick="switchDir('groups')">Groups</div>
+        </div>
+
+        <div id="sec-locations" class="dir-section active"></div>
+        <div id="sec-players" class="dir-section"></div>
+        <div id="sec-groups" class="dir-section"></div>
     </div>
 </div>
 <script src="locations.js"></script>
@@ -22,18 +42,30 @@ function switchDir(type) {
     event.currentTarget.classList.add('active');
     document.getElementById('sec-' + type).classList.add('active');
 }
+
 window.renderPage = function() {
     renderList('sec-locations', serverLocations, 'location');
     renderList('sec-players', serverPlayers, 'player');
     renderList('sec-groups', serverGroups, 'group');
 };
+
 function renderList(targetId, data, type) {
-    document.getElementById(targetId).innerHTML = data.map(item => `
+    document.getElementById(targetId).innerHTML = data.map(item => {
+        let badge = "";
+        if (type === 'player') {
+            const isOnline = onlinePlayers.includes(item.name.toLowerCase());
+            badge = isOnline ? `<span class="status-badge status-online">🟢 Online</span>` : `<span class="status-badge status-offline">🔴 Offline</span>`;
+        }
+        return `
         <div class="board-item">
             <div class="loc-thumb" style="background-image: url('${item.image}')"></div>
-            <div class="board-info"><h2><a href="${type}.html?id=${item.id}">${item.name}</a></h2><p>${item.description.substring(0, 120)}...</p></div>
+            <div class="board-info">
+                <h2><a href="${type}.html?id=${item.id}">${item.name}</a> ${badge}</h2>
+                <p>${item.description.substring(0, 120)}...</p>
+            </div>
         </div>
-    `).join('') || "<p>No entries found.</p>";
+        `;
+    }).join('') || `<div class="board-item"><p style="margin:0;">No entries found.</p></div>`;
 }
 </script>
 </body>

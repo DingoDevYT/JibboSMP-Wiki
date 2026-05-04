@@ -1,17 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Location Details</title><link rel="stylesheet" href="style.css"></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Location Details</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="forum-wrapper">
     <div class="header">
-        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Beta 1.7.3 Wiki</h1></div>
-        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Beta 1.7.3 Wiki</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
     </div>
-    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="submit.html">Submit</a>
+    </div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
-            <div style="flex: 0 0 400px;"><img id="locImage" style="width: 100%; border: 2px solid #555;"><div style="background: #1e1e1e; padding: 15px; margin-top: 15px; border: 1px solid #444;"><p><strong>Coordinates:</strong> <span id="locCoords" style="color: #55aaff;"></span></p><p id="ownerLink" style="margin-top: 10px;"></p></div><button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Page</button></div>
-            <div style="flex-grow: 1;"><h1 id="locTitle" style="color: #55aaff; margin-top: 0;"></h1><div class="board-header">History</div><p id="locDesc" style="background: #262626; padding: 20px; border: 1px solid #444; line-height: 1.6;"></p></div>
+            <div style="flex: 0 0 400px;">
+                <img id="locImage" style="width: 100%; border: 2px solid #555; background: #111;">
+                <div style="background: #1e1e1e; padding: 15px; margin-top: 15px; border: 1px solid #444;">
+                    <p style="margin: 0 0 10px 0;"><strong>Coordinates:</strong> <span id="locCoords" style="color: #55aaff; font-family: monospace;"></span></p>
+                    <p style="margin: 0 0 10px 0; font-size: 13px;"><strong>Built:</strong> <span id="buildDate"></span></p>
+                    <p id="ownerLink" style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #333;"></p>
+                </div>
+                <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Page</button>
+            </div>
+            <div style="flex-grow: 1;">
+                <h1 id="locTitle" style="color: #55aaff; margin-top: 0;"></h1>
+                <div class="board-header">History</div>
+                <p id="locDesc" style="background: #262626; padding: 20px; border: 1px solid #444; line-height: 1.6;"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -21,11 +48,13 @@ window.renderPage = function() {
     const id = new URLSearchParams(window.location.search).get('id');
     const loc = serverLocations.find(l => l.id === id);
     if (!loc) return;
+    
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('locTitle').innerText = loc.name;
     document.getElementById('locImage').src = loc.image;
     document.getElementById('locDesc').innerText = loc.description;
     document.getElementById('locCoords').innerText = `${loc.x}, ${loc.y}, ${loc.z}`;
+    document.getElementById('buildDate').innerText = loc.buildDate || "Unknown";
     
     let linkHtml = "Built By: ";
     const p = serverPlayers.find(x => x.name.toLowerCase() === loc.ownerPlayer.toLowerCase());
