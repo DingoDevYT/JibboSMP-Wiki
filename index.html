@@ -23,12 +23,10 @@
     <div class="content">
         <div class="welcome-box" style="background-color: #262626; padding: 20px; border: 1px solid #444444; margin-bottom: 20px;">
             <h2 style="margin-top: 0; color: #55aaff;">Welcome to the Unofficial Server Wiki</h2>
-            <p>This wiki is dedicated to documenting the builds, history, and key locations of our Beta 1.7.3 Minecraft server. Whether you are looking for the nearest marketplace, exploring ancient ruins, or just trying to find your way back to Spawn, we've got you covered.</p>
+            <p>This wiki documents the builds and history of our Beta 1.7.3 server. Use the tabs above to explore the map or submit your own home!</p>
         </div>
 
         <h3 style="color: #ffffff; border-bottom: 1px solid #444444; padding-bottom: 5px;">Latest Additions</h3>
-        
-        <!-- This empty list is populated by the script below -->
         <ul id="latestAdditionsList" class="board-list">
             <li class="board-item" style="color: #999999;">Loading database...</li>
         </ul>
@@ -41,7 +39,6 @@ function renderLatestAdditions() {
     const listElement = document.getElementById('latestAdditionsList');
     listElement.innerHTML = '';
     
-    // Grab the last 3 items from the database and reverse them so the newest is on top
     const recentLocations = serverLocations.slice(-3).reverse();
     
     if (recentLocations.length === 0) {
@@ -52,20 +49,15 @@ function renderLatestAdditions() {
     recentLocations.forEach(loc => {
         const li = document.createElement('li');
         li.className = 'board-item interactive-item';
-        
-        // Create a short preview of the description
-        let previewDesc = loc.description.substring(0, 90);
-        if (loc.description.length > 90) previewDesc += '...';
-        
-        let authorText = loc.ownerPlayer !== 'N/A' ? loc.ownerPlayer : (loc.ownerGroup !== 'N/A' ? loc.ownerGroup : 'Unknown');
+        const imgUrl = loc.image.startsWith('http') ? loc.image : "assets/" + loc.image;
 
         li.innerHTML = `
-            <div class="icon-placeholder"></div>
+            <div class="loc-thumb" style="background-image: url('${imgUrl}')"></div>
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
-                <p>${previewDesc}</p>
+                <p>${loc.description.substring(0, 90)}...</p>
                 <p style="margin-top: 5px; font-size: 10px; color: #777777;">
-                    Added: ${loc.buildDate} | Built By: <span style="color: #cccccc;">${authorText}</span>
+                    Added: ${loc.buildDate} | Built By: ${loc.ownerPlayer !== 'N/A' ? loc.ownerPlayer : 'Community'}
                 </p>
             </div>
         `;

@@ -77,20 +77,21 @@ body {
 .split-container {
     display: flex;
     gap: 20px;
-    height: 700px;
+    height: 700px; /* Fixed height for the split view */
 }
 
 .sidebar {
     width: 350px;
     background-color: #222222;
     border: 1px solid #444444;
-    overflow-y: auto;
+    overflow-y: auto; /* Enables scrolling for the list */
 }
 
-.map-frame-container {
+.map-wrapper {
     flex-grow: 1;
     border: 1px solid #444444;
     background-color: #000;
+    position: relative;
 }
 
 iframe {
@@ -121,14 +122,20 @@ iframe {
     background-color: #2a2a2a;
 }
 
-.icon-placeholder {
-    width: 32px;
-    height: 32px;
-    background-color: #4a5d23;
-    border: 1px solid #2d3815;
+.selected-location {
+    background-color: #3a4a1c !important;
+    border-left: 4px solid #ffffff;
+}
+
+.loc-thumb {
+    width: 48px;
+    height: 48px;
     margin-right: 15px;
     flex-shrink: 0;
-    margin-top: 2px;
+    border: 1px solid #444;
+    background-size: cover;
+    background-position: center;
+    image-rendering: pixelated;
 }
 
 .board-info {

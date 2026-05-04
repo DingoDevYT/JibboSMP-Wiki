@@ -32,19 +32,15 @@
                 </ul>
             </div>
             
-            <div class="map-frame-container" style="display: flex; flex-direction: column;">
-                <div style="background-color: #802020; color: white; padding: 10px; font-size: 12px; text-align: center; border-bottom: 1px solid #444444;">
-                    If the map is blank, your browser or proxy is blocking it. <a href="http://51.81.142.14:8021/#" target="_blank" style="color: #ffcc00; font-weight: bold; text-decoration: underline;">Click here to open the live map safely in a new tab.</a>
-                </div>
-                <!-- Updated iframe source to use your specific Cloudflare Worker -->
-                <iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#" allowfullscreen style="flex-grow: 1;"></iframe>
+            <div class="map-wrapper">
+                <iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#" allowfullscreen></iframe>
             </div>
         </div>
     </div>
 </div>
 
+<script src="locations.js"></script>
 <script>
-let mapIframe;
 let locationListElement;
 
 function renderLocations() {
@@ -54,38 +50,44 @@ function renderLocations() {
     serverLocations.forEach(loc => {
         const li = document.createElement('li');
         li.className = 'board-item interactive-item';
+        li.id = `sidebar-${loc.id}`;
         
-        let previewDesc = loc.description.substring(0, 60);
-        if (loc.description.length > 60) previewDesc += '...';
+        const imgUrl = loc.image.startsWith('http') ? loc.image : "assets/" + loc.image;
 
         li.innerHTML = `
-            <div class="icon-placeholder"></div>
+            <div class="loc-thumb" style="background-image: url('${imgUrl}')"></div>
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
-                <p>${previewDesc}</p>
-                <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z})">View on Map</button>
+                <p>X: ${loc.x} Z: ${loc.z}</p>
+                <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">View on Map</button>
             </div>
         `;
         locationListElement.appendChild(li);
     });
+    
+    checkUrlForCoords();
 }
 
-function panMap(x, y, z) {
-    mapIframe = document.getElementById('mapIframe');
+function panMap(x, y, z, id) {
+    const mapIframe = document.getElementById('mapIframe');
     const zoomLevel = 6;
-    // Updated pan function to push coordinates through your Cloudflare proxy
     mapIframe.src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
+    
+    // Selection logic
+    document.querySelectorAll('.board-item').forEach(el => el.classList.remove('selected-location'));
+    const target = document.getElementById(`sidebar-${id}`);
+    if (target) {
+        target.classList.add('selected-location');
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 function filterLocations() {
     const input = document.getElementById('searchBar').value.toUpperCase();
     const items = locationListElement.getElementsByTagName('li');
-
     for (let i = 0; i < items.length; i++) {
         let h2 = items[i].getElementsByTagName("h2")[0];
-        let txtValue = h2.textContent || h2.innerText;
-        
-        if (txtValue.toUpperCase().indexOf(input) > -1) {
+        if (h2.textContent.toUpperCase().indexOf(input) > -1) {
             items[i].style.display = "";
         } else {
             items[i].style.display = "none";
@@ -98,17 +100,8 @@ function checkUrlForCoords() {
     const mapX = urlParams.get('x');
     const mapY = urlParams.get('y');
     const mapZ = urlParams.get('z');
-    
-    if (mapX !== null && mapY !== null && mapZ !== null) {
-        panMap(mapX, mapY, mapZ);
-    }
+    if (mapX && mapY && mapZ) panMap(mapX, mapY, mapZ);
 }
-</script>
-<script src="locations.js"></script>
-<script>
-window.onload = function() {
-    checkUrlForCoords();
-};
 </script>
 </body>
 </html>
