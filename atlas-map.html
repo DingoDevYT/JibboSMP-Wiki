@@ -34,9 +34,10 @@
             
             <div class="map-frame-container" style="display: flex; flex-direction: column;">
                 <div style="background-color: #802020; color: white; padding: 10px; font-size: 12px; text-align: center; border-bottom: 1px solid #444444;">
-                    If the map is blank, your browser is blocking it due to GitHub Pages security. <a href="http://51.81.142.14:8021/#" target="_blank" style="color: #ffcc00; font-weight: bold; text-decoration: underline;">Click here to open the live map safely in a new tab.</a>
+                    If the map is blank, your browser or proxy is blocking it. <a href="http://51.81.142.14:8021/#" target="_blank" style="color: #ffcc00; font-weight: bold; text-decoration: underline;">Click here to open the live map safely in a new tab.</a>
                 </div>
-                <iframe id="mapIframe" src="http://51.81.142.14:8021/#" allowfullscreen style="flex-grow: 1;"></iframe>
+                <!-- Updated iframe source to use your specific Cloudflare Worker -->
+                <iframe id="mapIframe" src="https://dynmap-proxy.landonian2006.workers.dev/#" allowfullscreen style="flex-grow: 1;"></iframe>
             </div>
         </div>
     </div>
@@ -72,7 +73,8 @@ function renderLocations() {
 function panMap(x, y, z) {
     mapIframe = document.getElementById('mapIframe');
     const zoomLevel = 6;
-    mapIframe.src = `http://51.81.142.14:8021/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
+    // Updated pan function to push coordinates through your Cloudflare proxy
+    mapIframe.src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
 }
 
 function filterLocations() {
