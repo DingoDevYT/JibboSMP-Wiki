@@ -35,6 +35,7 @@
                 </h1>
                 <p id="pStats" style="font-weight: bold; color: #777;"></p>
                 <div class="board-header">Biography</div>
+                <!-- Changed to allow HTML parsing for auto-links -->
                 <p id="pDesc" style="line-height: 1.6; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 20px;"></p>
                 <div class="board-header">Builds</div>
                 <div id="builds"></div>
@@ -52,7 +53,9 @@ window.renderPage = function() {
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('pName').innerText = player.name;
     document.getElementById('pImg').src = player.image;
-    document.getElementById('pDesc').innerText = player.description;
+    
+    // Inject the auto-linked text
+    document.getElementById('pDesc').innerHTML = autoLinkText(player.description);
     
     // Online Badge
     const isOnline = onlinePlayers.includes(player.name.toLowerCase());

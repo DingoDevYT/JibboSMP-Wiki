@@ -33,6 +33,7 @@
                 <h1 id="groupName" style="color: #55aaff; margin-top: 0;"></h1>
                 <p style="font-weight: bold; color: #777;">Founded: <span id="foundDate"></span></p>
                 <div class="board-header">History</div>
+                <!-- Changed to allow HTML parsing for auto-links -->
                 <p id="groupDesc" style="line-height: 1.6; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 20px;"></p>
                 <div class="board-header">Members</div>
                 <div id="memberList"></div>
@@ -50,7 +51,10 @@ window.renderPage = function() {
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('groupName').innerText = group.name;
     document.getElementById('groupImage').src = group.image;
-    document.getElementById('groupDesc').innerText = group.description;
+    
+    // Inject the auto-linked text
+    document.getElementById('groupDesc').innerHTML = autoLinkText(group.description);
+    
     document.getElementById('foundDate').innerText = group.foundingDate;
     
     const m = serverPlayers.filter(p => p.group.toLowerCase() === group.name.toLowerCase());

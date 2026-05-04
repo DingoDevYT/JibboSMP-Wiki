@@ -22,12 +22,44 @@ async function fetchOnlinePlayers() {
     }
 }
 
-// Generates correct avatar URL
+// Upgraded, bulletproof image resolver
 function resolveImage(imgUrl, name) {
-    if (!imgUrl || imgUrl.trim() === "" || imgUrl.toUpperCase() === "N/A") {
-        return `https://minotar.net/helm/${name}/128.png`;
+    if (!imgUrl || imgUrl.trim() === "" || imgUrl.trim().toUpperCase() === "N/A") {
+        // Encode the name to handle spaces, and request a high-res 256px image
+        const cleanName = encodeURIComponent(name.trim());
+        return `https://minotar.net/helm/${cleanName}/256.png`;
     }
-    return imgUrl;
+    return imgUrl.trim();
+}
+
+// New Auto-Linking Engine
+function autoLinkText(text) {
+    if (!text) return "";
+    
+    // Combine players and groups into one searchable array
+    const entities = [
+        ...serverPlayers.map(p => ({ name: p.name.trim(), url: `player.html?id=${p.id}` })),
+        ...serverGroups.map(g => ({ name: g.name.trim(), url: `group.html?id=${g.id}` }))
+    ];
+    
+    // Sort by length descending so "The Miners" is linked before the word "The"
+    entities.sort((a, b) => b.name.length - a.name.length);
+    
+    let linkedText = text;
+    entities.forEach(entity => {
+        if (!entity.name || entity.name.length < 3) return; // Ignore tiny names to prevent false positives
+        
+        // Escape regex special characters
+        const safeName = entity.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // Intelligent Regex: Matches the name perfectly, but ignores it if it's already inside an HTML tag
+        const regex = new RegExp(`\\b(${safeName})\\b(?![^<]*>|[^<>]*<\\/a>)`, 'gi');
+        
+        linkedText = linkedText.replace(regex, `<a href="${entity.url}" class="auto-link">$&</a>`);
+    });
+    
+    // Convert Google Sheets line breaks into proper HTML line breaks
+    return linkedText.replace(/\n/g, '<br><br>');
 }
 
 function parseCSV(csvText, type) {
@@ -56,8 +88,6 @@ function parseCSV(csvText, type) {
 async function loadAllData() {
     try {
         const cacheBust = "&t=" + new Date().getTime();
-        
-        // Fetch everything simultaneously, including the Dynmap status
         const [locRes, playRes, groupRes, _] = await Promise.all([
             fetch(URLS.locations + cacheBust), 
             fetch(URLS.players + cacheBust), 

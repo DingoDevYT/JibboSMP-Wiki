@@ -37,6 +37,7 @@
             <div style="flex-grow: 1;">
                 <h1 id="locTitle" style="color: #55aaff; margin-top: 0;"></h1>
                 <div class="board-header">History</div>
+                <!-- Changed to allow HTML parsing for auto-links -->
                 <p id="locDesc" style="background: #262626; padding: 20px; border: 1px solid #444; line-height: 1.6;"></p>
             </div>
         </div>
@@ -52,7 +53,10 @@ window.renderPage = function() {
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('locTitle').innerText = loc.name;
     document.getElementById('locImage').src = loc.image;
-    document.getElementById('locDesc').innerText = loc.description;
+    
+    // Inject the auto-linked text
+    document.getElementById('locDesc').innerHTML = autoLinkText(loc.description);
+    
     document.getElementById('locCoords').innerText = `${loc.x}, ${loc.y}, ${loc.z}`;
     document.getElementById('buildDate').innerText = loc.buildDate || "Unknown";
     

@@ -86,3 +86,15 @@ iframe { width: 100%; height: 100%; border: none; display: block; }
 .status-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold; margin-left: 10px; vertical-align: middle; }
 .status-online { background: #2d4a22; color: #8fdf5d; border: 1px solid #4a7531; }
 .status-offline { background: #4a2222; color: #df5d5d; border: 1px solid #753131; }
+
+/* Auto-Link Styling */
+.auto-link { 
+    color: #ffcc00; /* Distinct gold color so they stand out in paragraphs */
+    text-decoration: none; 
+    font-weight: bold; 
+    border-bottom: 1px dotted #ffcc00;
+}
+.auto-link:hover { 
+    color: #ffffff; 
+    border-bottom: 1px solid #ffffff;
+}
