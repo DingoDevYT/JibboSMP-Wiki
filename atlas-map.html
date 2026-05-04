@@ -17,6 +17,7 @@
     <div class="navbar">
         <a href="index.html">Home</a>
         <a href="atlas-map.html">Atlas & Map</a>
+        <a href="submit.html">Submit Location</a>
     </div>
 
     <div class="content">
@@ -27,33 +28,40 @@
         <div class="split-container">
             <div class="sidebar">
                 <ul id="locationList" class="board-list">
+                    <li class="board-item" style="color: #999999;">Loading database...</li>
                 </ul>
             </div>
             
-            <div class="map-frame-container">
-                <iframe id="mapIframe" src="http://51.81.142.14:8021/#" allowfullscreen></iframe>
+            <div class="map-frame-container" style="display: flex; flex-direction: column;">
+                <div style="background-color: #802020; color: white; padding: 10px; font-size: 12px; text-align: center; border-bottom: 1px solid #444444;">
+                    If the map is blank, your browser is blocking it due to GitHub Pages security. <a href="http://51.81.142.14:8021/#" target="_blank" style="color: #ffcc00; font-weight: bold; text-decoration: underline;">Click here to open the live map safely in a new tab.</a>
+                </div>
+                <iframe id="mapIframe" src="http://51.81.142.14:8021/#" allowfullscreen style="flex-grow: 1;"></iframe>
             </div>
         </div>
     </div>
 </div>
 
-<script src="locations.js"></script>
 <script>
-const locationListElement = document.getElementById('locationList');
-const mapIframe = document.getElementById('mapIframe');
+let mapIframe;
+let locationListElement;
 
 function renderLocations() {
+    locationListElement = document.getElementById('locationList');
     locationListElement.innerHTML = '';
     
     serverLocations.forEach(loc => {
         const li = document.createElement('li');
         li.className = 'board-item interactive-item';
         
+        let previewDesc = loc.description.substring(0, 60);
+        if (loc.description.length > 60) previewDesc += '...';
+
         li.innerHTML = `
             <div class="icon-placeholder"></div>
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
-                <p>${loc.description.substring(0, 60)}...</p>
+                <p>${previewDesc}</p>
                 <button class="pan-button" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z})">View on Map</button>
             </div>
         `;
@@ -62,6 +70,7 @@ function renderLocations() {
 }
 
 function panMap(x, y, z) {
+    mapIframe = document.getElementById('mapIframe');
     const zoomLevel = 6;
     mapIframe.src = `http://51.81.142.14:8021/?x=${x}&y=${y}&z=${z}&zoom=${zoomLevel}`;
 }
@@ -92,9 +101,10 @@ function checkUrlForCoords() {
         panMap(mapX, mapY, mapZ);
     }
 }
-
+</script>
+<script src="locations.js"></script>
+<script>
 window.onload = function() {
-    renderLocations();
     checkUrlForCoords();
 };
 </script>

@@ -1,8 +1,64 @@
-<!-- The top half of location.html remains exactly the same, just update the script at the bottom: -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location Details</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-<script src="locations.js"></script>
+<div class="forum-wrapper">
+    <div class="header">
+        <img src="assets/server-icon.png" alt="Server Icon" class="logo">
+        <h1>Beta 1.7.3 Server Wiki</h1>
+    </div>
+
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="atlas-map.html">Interactive Atlas</a>
+        <a href="submit.html">Submit Location</a>
+    </div>
+
+    <div class="content" id="loadingContent">
+        <p style="color: #cccccc; text-align: center; padding: 50px;">Loading database...</p>
+    </div>
+
+    <div class="content" id="locationContent" style="display: none;">
+        <div style="background-color: #262626; border: 1px solid #444444; padding: 20px; margin-bottom: 20px;">
+            <h2 id="locTitle" style="margin-top: 0; color: #55aaff; border-bottom: 1px solid #444444; padding-bottom: 10px;"></h2>
+            
+            <div style="display: flex; gap: 20px; margin-top: 15px;">
+                <div style="flex: 0 0 400px;">
+                    <img id="locImage" src="" alt="Location Screenshot" style="width: 100%; border: 2px solid #1e1e1e; image-rendering: pixelated;">
+                    
+                    <div style="background-color: #1e1e1e; border: 1px solid #444444; padding: 10px; margin-top: 10px;">
+                        <p style="margin: 0; color: #cccccc; font-weight: bold;">Coordinates:</p>
+                        <p id="locCoords" style="margin: 5px 0 0 0; color: #999999; font-family: monospace; font-size: 14px;"></p>
+                    </div>
+                    
+                    <button class="pan-button" id="mapButton" style="width: 100%; margin-top: 10px; padding: 10px; font-size: 14px;">View on Interactive Map</button>
+                </div>
+                
+                <div style="flex-grow: 1;">
+                    <h3 style="color: #ffffff; margin-top: 0;">Description</h3>
+                    <p id="locDesc" style="color: #cccccc; line-height: 1.6;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content" id="errorContent" style="display: none;">
+        <h2 style="color: #ff5555;">Location Not Found</h2>
+        <p style="color: #cccccc;">The location you are looking for does not exist in the database.</p>
+        <a href="atlas-map.html" style="color: #55aaff;">Return to the Atlas</a>
+    </div>
+</div>
+
 <script>
 function renderLocationDetails() {
+    document.getElementById('loadingContent').style.display = 'none';
+
     const urlParams = new URLSearchParams(window.location.search);
     const targetId = urlParams.get('id');
 
@@ -14,11 +70,9 @@ function renderLocationDetails() {
         document.title = locationData.name + " - Server Wiki";
         document.getElementById('locTitle').innerText = locationData.name;
         
-        // Handle whether the image is a direct URL (Imgur) or local asset
         const imgUrl = locationData.image.startsWith('http') ? locationData.image : "assets/" + locationData.image;
         document.getElementById('locImage').src = imgUrl;
         
-        // Include the new data fields
         let builderInfo = locationData.ownerPlayer !== 'N/A' ? locationData.ownerPlayer : locationData.ownerGroup;
         
         document.getElementById('locCoords').innerHTML = `
@@ -36,3 +90,6 @@ function renderLocationDetails() {
     }
 }
 </script>
+<script src="locations.js"></script>
+</body>
+</html>
