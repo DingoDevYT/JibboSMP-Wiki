@@ -1,7 +1,4 @@
-let serverLocations = [];
-let serverPlayers = [];
-let serverGroups = [];
-
+let serverLocations = [], serverPlayers = [], serverGroups = [];
 const BASE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSd_knG9JWDn5KdFZ98mLTYBSiUCXZSFxuT9-kqy7hAIfEXwy0Nb--B_AdTqoe1V3oyzK4JjL9UD5U3/pub?";
 const URLS = {
     locations: BASE_URL + "gid=0&single=true&output=csv",
@@ -41,21 +38,17 @@ async function loadAllData() {
         serverPlayers = parseCSV(await playRes.text(), 'players');
         serverGroups = parseCSV(await groupRes.text(), 'groups');
 
-        // Page-specific renders
         if (window.renderPage) window.renderPage();
         if (typeof populateDropdowns === 'function') populateDropdowns();
     } catch (e) { console.error("Database Error:", e); }
 }
 
-// Global Search Function
 function globalSearch() {
     const query = document.getElementById('globalSearch').value.toLowerCase();
     const resultsDiv = document.getElementById('searchResults');
     if (query.length < 2) { resultsDiv.style.display = 'none'; return; }
-
     const allData = [...serverLocations, ...serverPlayers, ...serverGroups];
     const filtered = allData.filter(item => item.name.toLowerCase().includes(query));
-
     resultsDiv.innerHTML = filtered.map(item => `
         <a href="${item.type}.html?id=${item.id}" class="search-res-item">
             <span class="search-res-type">${item.type}</span>

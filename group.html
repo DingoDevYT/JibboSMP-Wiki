@@ -1,119 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Info - Server Wiki</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+<head><meta charset="UTF-8"><title>Group Info</title><link rel="stylesheet" href="style.css"></head>
 <body>
-
 <div class="forum-wrapper">
-    <!-- Global Header with Search -->
     <div class="header">
-        <div class="header-left">
-            <img src="assets/server-icon.png" class="logo" alt="Server Icon">
-            <h1>Beta 1.7.3 Server Wiki</h1>
-        </div>
-        <div class="global-search-container">
-            <input type="text" id="globalSearch" placeholder="Search Wiki..." onkeyup="globalSearch()">
-            <div id="searchResults"></div>
-        </div>
+        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Beta 1.7.3 Wiki</h1></div>
+        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
     </div>
-
-    <!-- Navigation -->
-    <div class="navbar">
-        <a href="index.html">Home</a>
-        <a href="directory.html">Directory</a>
-        <a href="atlas-map.html">Interactive Atlas</a>
-        <a href="submit.html">Submit</a>
-    </div>
-
+    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
-            <!-- Left Sidebar -->
-            <div style="flex: 0 0 300px;">
-                <img id="groupImage" style="width: 100%; border: 2px solid #555; image-rendering: pixelated; box-shadow: 4px 4px 0px #000;">
-                
-                <div style="background: #1e1e1e; padding: 15px; margin-top: 15px; border: 1px solid #444;">
-                    <div class="board-header" style="margin: -15px -15px 10px -15px; border: none;">Group Info</div>
-                    <p style="margin: 5px 0;"><strong>Founded:</strong> <span id="foundDate"></span></p>
-                    <p id="leaderLink" style="margin: 10px 0 0 0; border-top: 1px solid #333; padding-top: 10px; font-weight: bold;"></p>
-                </div>
-
-                <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Group Profile</button>
-            </div>
-
-            <!-- Right Content -->
-            <div style="flex-grow: 1;">
-                <h1 id="groupName" style="color: #55aaff; margin-top: 0; font-size: 28px; text-shadow: 2px 2px #000; border-bottom: 2px solid #444; padding-bottom: 10px;"></h1>
-                
-                <div class="board-header">Group History</div>
-                <p id="groupDesc" style="line-height: 1.6; font-size: 14px; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 30px;"></p>
-                
-                <div class="board-header">Active Members</div>
-                <div id="memberList" class="board-list" style="border: 1px solid #444;">
-                    <!-- Members populated via script -->
-                </div>
-            </div>
+            <div style="flex: 0 0 300px;"><img id="groupImage" style="width: 100%; border: 2px solid #555;"><button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Group</button></div>
+            <div style="flex-grow: 1;"><h1 id="groupName" style="color: #55aaff; margin-top: 0;"></h1><p>Founded: <span id="foundDate"></span></p><div class="board-header">History</div><p id="groupDesc" style="line-height: 1.6;"></p><div class="board-header">Members</div><div id="memberList"></div></div>
         </div>
     </div>
-
-    <!-- Error State -->
-    <div class="content" id="errorContent" style="display:none; text-align: center; padding: 100px 0;">
-        <h1 style="color: #ff5555;">Group Not Found</h1>
-        <p>The ID provided does not match any approved groups in the database.</p>
-        <a href="directory.html" class="pan-button" style="display: inline-block; margin-top: 20px; text-decoration: none;">Back to Directory</a>
-    </div>
 </div>
-
 <script src="locations.js"></script>
 <script>
 window.renderPage = function() {
     const id = new URLSearchParams(window.location.search).get('id');
     const group = serverGroups.find(g => g.id === id);
-
-    if (group) {
-        document.getElementById('profileContent').style.display = 'block';
-        document.getElementById('groupName').innerText = group.name;
-        document.getElementById('groupImage').src = group.image;
-        document.getElementById('groupDesc').innerText = group.description;
-        document.getElementById('foundDate').innerText = group.foundingDate || "Ancient Era";
-
-        // Link to Leader
-        let leaderHtml = "Leader: ";
-        const leader = serverPlayers.find(p => p.name.toLowerCase() === group.leader.toLowerCase());
-        if (leader) {
-            leaderHtml += `<a href="player.html?id=${leader.id}" style="color:#55aaff; text-decoration: underline;">${leader.name}</a>`;
-        } else {
-            leaderHtml += group.leader || "Unknown";
-        }
-        document.getElementById('leaderLink').innerHTML = leaderHtml;
-
-        // Auto-generate Member List from Player Database
-        const members = serverPlayers.filter(p => p.group.toLowerCase() === group.name.toLowerCase());
-        const listDiv = document.getElementById('memberList');
-        
-        if (members.length > 0) {
-            listDiv.innerHTML = members.map(m => `
-                <div class="board-item" style="padding: 10px; border-bottom: 1px solid #333;">
-                    <div class="loc-thumb" style="width: 32px; height: 32px; background-image: url('${m.image}')"></div>
-                    <div class="board-info">
-                        <h2 style="font-size: 14px; margin: 0;"><a href="player.html?id=${m.id}">${m.name}</a></h2>
-                        <p style="margin: 0; font-size: 11px;">Joined: ${m.joinDate}</p>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            listDiv.innerHTML = '<p style="padding: 15px; color: #777;">No members officially registered to this group.</p>';
-        }
-
-        document.getElementById('editBtn').onclick = () => {
-            location.href = `submit.html?type=group&edit=${group.id}`;
-        };
-    } else {
-        document.getElementById('errorContent').style.display = 'block';
-    }
+    if (!group) return;
+    document.getElementById('profileContent').style.display = 'block';
+    document.getElementById('groupName').innerText = group.name;
+    document.getElementById('groupImage').src = group.image;
+    document.getElementById('groupDesc').innerText = group.description;
+    document.getElementById('foundDate').innerText = group.foundingDate;
+    const m = serverPlayers.filter(p => p.group.toLowerCase() === group.name.toLowerCase());
+    document.getElementById('memberList').innerHTML = m.map(item => `<p><a href="player.html?id=${item.id}" style="color:#55aaff;">${item.name}</a></p>`).join('') || "No members found.";
+    document.getElementById('editBtn').onclick = () => location.href = `submit.html?type=group&edit=${group.id}`;
 };
 </script>
 </body>

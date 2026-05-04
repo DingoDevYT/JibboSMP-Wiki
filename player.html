@@ -1,24 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8"><title>Player Profile</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+<head><meta charset="UTF-8"><title>Player Profile</title><link rel="stylesheet" href="style.css"></head>
 <body>
 <div class="forum-wrapper">
-    <!-- Insert Header/Navbar Here -->
+    <div class="header">
+        <div class="header-left"><img src="assets/server-icon.png" class="logo"><h1>Beta 1.7.3 Wiki</h1></div>
+        <div class="global-search-container"><input type="text" id="globalSearch" placeholder="Search..." onkeyup="globalSearch()"><div id="searchResults"></div></div>
+    </div>
+    <div class="navbar"><a href="index.html">Home</a><a href="directory.html">Directory</a><a href="atlas-map.html">Atlas</a><a href="submit.html">Submit</a></div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
-            <div style="flex: 0 0 300px;">
-                <img id="pImg" style="width: 100%; border: 2px solid #555; image-rendering: pixelated;">
-                <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Profile</button>
-            </div>
-            <div style="flex-grow: 1;">
-                <h1 id="pName" style="color: #55aaff; margin-top: 0;"></h1>
-                <p id="pStats" style="font-weight: bold; color: #777;"></p>
-                <div class="board-header">Biography</div>
-                <p id="pDesc" style="line-height: 1.6;"></p>
-            </div>
+            <div style="flex: 0 0 300px;"><img id="pImg" style="width: 100%; border: 2px solid #555;"><button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Profile</button></div>
+            <div style="flex-grow: 1;"><h1 id="pName" style="color: #55aaff; margin-top: 0;"></h1><p id="pStats" style="font-weight: bold; color: #777;"></p><div class="board-header">Biography</div><p id="pDesc" style="line-height: 1.6;"></p><div class="board-header">Builds</div><ul id="builds" style="list-style: none; padding: 0;"></ul></div>
         </div>
     </div>
 </div>
@@ -28,12 +21,13 @@ window.renderPage = function() {
     const id = new URLSearchParams(window.location.search).get('id');
     const player = serverPlayers.find(p => p.id === id);
     if (!player) return;
-
     document.getElementById('profileContent').style.display = 'block';
     document.getElementById('pName').innerText = player.name;
     document.getElementById('pImg').src = player.image;
     document.getElementById('pDesc').innerText = player.description;
     document.getElementById('pStats').innerText = `Joined: ${player.joinDate} | Group: ${player.group}`;
+    const b = serverLocations.filter(l => l.ownerPlayer === player.name);
+    document.getElementById('builds').innerHTML = b.map(item => `<li><a href="location.html?id=${item.id}" style="color:#55aaff;">${item.name}</a></li>`).join('') || "No builds documented.";
     document.getElementById('editBtn').onclick = () => location.href = `submit.html?type=player&edit=${player.id}`;
 };
 </script>
