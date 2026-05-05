@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voxel Maps - Transit</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="forum-wrapper">
+    <div class="header">
+        <div class="header-left">
+            <img src="assets/server-icon.png" class="logo" alt="Logo">
+            <h1>Voxel Maps Transit Routing</h1>
+        </div>
+        <div class="global-search-container">
+            <input type="text" id="globalSearch" placeholder="Search Wiki..." onkeyup="globalSearch()">
+            <div id="searchResults"></div>
+        </div>
+    </div>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="directory.html">Directory</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
+        <a href="submit.html">Submit</a>
+    </div>
+    
+    <div class="content split-container">
+        <div class="sidebar" style="padding: 20px;">
+            <h2 style="color: #55aaff; margin-top: 0;">Plan Route</h2>
+            <label style="color:#ccc; font-weight:bold; display:block; margin-bottom:5px;">Starting Station:</label>
+            <select id="routeStart" style="width:100%; padding:8px; background:#111; color:#fff; border:1px solid #555; margin-bottom:15px; font-family: Tahoma;"></select>
+            
+            <label style="color:#ccc; font-weight:bold; display:block; margin-bottom:5px;">Destination:</label>
+            <select id="routeEnd" style="width:100%; padding:8px; background:#111; color:#fff; border:1px solid #555; margin-bottom:20px; font-family: Tahoma;"></select>
+            
+            <button class="pan-button" style="width:100%;" onclick="calculateRoute()">Find Fastest Route</button>
+            <button class="pan-button" style="width:100%; margin-top:10px; background:#444;" onclick="resetMap()">Clear Route</button>
+
+            <div id="routeResults" style="margin-top: 20px; color: #ffcc00; font-weight: bold; line-height: 1.5;"></div>
+        </div>
+        
+        <div class="map-wrapper map-container" id="mapContainer">
+            <div id="emptyWarning" style="display:none; position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.8); color:#ff5555; padding:15px; border:1px solid #ff5555; z-index:100;">
+                <strong>No Rail Data Found!</strong><br>The database is currently empty. Use the Admin Network Builder to draw the subway lines.
+            </div>
+            <svg id="transitMap">
+                <g id="mapGroup">
+                    <g id="linesLayer"></g>
+                    <g id="nodesLayer"></g>
+                    <g id="labelsLayer"></g>
+                </g>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<script src="locations.js"></script>
+<script>
+let scale = 0.2, panX = 0, panY = 0, isDragging = false, startX, startY;
+const mapGroup = document.getElementById('mapGroup');
+
+window.renderPage = function() {
+    if (serverRails.length === 0) {
+        document.getElementById('emptyWarning').style.display = 'block';
+    }
+
+    const stations = serverRails.filter(r => r.type === 'station').sort((a,b) => a.name.localeCompare(b.name));
+    const options = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    document.getElementById('routeStart').innerHTML = options;
+    document.getElementById('routeEnd').innerHTML = options;
+
+    drawMap(serverRails);
+
+    if(serverRails.length > 0) {
+        const xs = serverRails.map(r => r.x), zs = serverRails.map(r => r.z);
+        panX = -(Math.min(...xs)) * scale + 200; 
+        panY = -(Math.min(...zs)) * scale + 200; 
+    } else {
+        panX = 300; panY = 300; 
+    }
+    updateTransform();
+};
+
+function drawMap(dataNodes) {
+    const lines = document.getElementById('linesLayer');
+    const nodes = document.getElementById('nodesLayer');
+    const labels = document.getElementById('labelsLayer');
+    lines.innerHTML = ''; nodes.innerHTML = ''; labels.innerHTML = '';
+
+    lines.innerHTML += `<line x1="-100" y1="0" x2="100" y2="0" stroke="#fff" stroke-width="4" opacity="0.2"></line>`;
+    lines.innerHTML += `<line x1="0" y1="-100" x2="0" y2="100" stroke="#fff" stroke-width="4" opacity="0.2"></line>`;
+    labels.innerHTML += `<text x="10" y="-10" fill="#fff" opacity="0.3" font-size="24">Spawn (0,0)</text>`;
+
+    dataNodes.forEach(node => {
+        node.connections.forEach(targetId => {
+            const target = dataNodes.find(r => r.id === targetId);
+            if(target) {
+                const color = node.color !== 'N/A' ? node.color : (target.color !== 'N/A' ? target.color : '#555');
+                lines.innerHTML += `<line id="edge-${node.id}-${target.id}" class="rail-line" x1="${node.x}" y1="${node.z}" x2="${target.x}" y2="${target.z}" stroke="${color}"></line>`;
+            }
+        });
+    });
+
+    dataNodes.forEach(node => {
+        if(node.type === 'station') {
+            const color = node.color !== 'N/A' ? node.color : '#fff';
+            nodes.innerHTML += `<circle id="node-${node.id}" class="rail-station" cx="${node.x}" cy="${node.z}" r="15" fill="${color}"></circle>`;
+            labels.innerHTML += `<text x="${node.x + 25}" y="${node.z + 8}" class="station-label">${node.name}</text>`;
+        } else {
+            nodes.innerHTML += `<circle id="node-${node.id}" cx="${node.x}" cy="${node.z}" r="8" fill="#888"></circle>`;
+        }
+    });
+}
+
+function calculateRoute() {
+    resetMap();
+    const start = document.getElementById('routeStart').value;
+    const end = document.getElementById('routeEnd').value;
+    if(!start || !end) return;
+    if(start === end) return alert("You are already at that station!");
+
+    const path = getShortestPath(start, end);
+    if(!path) {
+        document.getElementById('routeResults').innerText = "No connected route found.";
+        return;
+    }
+
+    let totalDist = 0;
+    for(let i = 0; i < path.length - 1; i++) {
+        const n1 = serverRails.find(r => r.id === path[i]);
+        const n2 = serverRails.find(r => r.id === path[i+1]);
+        totalDist += Math.hypot(n2.x - n1.x, n2.z - n1.z);
+    }
+
+    document.getElementById('routeResults').innerHTML = `Optimal Route Found!<br>Stops: ${path.length - 1}<br>Distance: ${Math.round(totalDist)} blocks`;
+
+    for(let i = 0; i < path.length; i++) {
+        const current = path[i];
+        const stationCircle = document.getElementById(`node-${current}`);
+        if(stationCircle) stationCircle.classList.add('station-highlight');
+
+        if(i < path.length - 1) {
+            const next = path[i+1];
+            let edge = document.getElementById(`edge-${current}-${next}`) || document.getElementById(`edge-${next}-${current}`);
+            if(edge) edge.classList.add('route-highlight');
+        }
+    }
+}
+
+function resetMap() {
+    document.querySelectorAll('.route-highlight, .station-highlight').forEach(el => el.classList.remove('route-highlight', 'station-highlight'));
+    document.getElementById('routeResults').innerText = "";
+}
+
+const container = document.getElementById('mapContainer');
+container.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; updateTransform(); }});
+container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const zoomIntensity = 0.05;
+    scale += e.deltaY < 0 ? zoomIntensity : -zoomIntensity;
+    scale = Math.min(Math.max(0.05, scale), 2); 
+    updateTransform();
+});
+function updateTransform() { mapGroup.setAttribute('transform', `translate(${panX}, ${panY}) scale(${scale})`); }
+</script>
+</body>
+</html>

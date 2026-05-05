@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Network Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: 800px; }
+        .panel { background: #222; border: 1px solid #444; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
+        .map-workspace { flex-grow: 1; position: relative; background: #000; overflow: hidden; }
+        .dynmap-frame { position: absolute; width: 100%; height: 100%; border: none; z-index: 1; }
+        .svg-overlay { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        svg { width: 100%; height: 100%; }
+        .rail-line { stroke-width: 8; stroke-linecap: round; opacity: 0.8; }
+        .sync-status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #8fdf5d; padding: 8px 12px; font-size: 11px; border: 1px solid #2d4a22; z-index: 20; border-radius: 4px; pointer-events: none; font-family: monospace; }
+        #nodeList { font-size: 11px; max-height: 250px; overflow-y: auto; padding: 10px; background: #1a1a1a; }
+        .debug-log { padding: 10px; font-family: monospace; font-size: 10px; color: #888; border-top: 1px solid #333; background: #111; max-height: 100px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+<div class="forum-wrapper" style="max-width: 1600px; width: 98%;">
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
+        <button onclick="boot()" style="background:#444; color:#fff; border:none; padding:5px 10px; cursor:pointer; margin-left:10px; border-radius:3px;">Reload Data</button>
+    </div>
+    
+    <div class="content admin-grid">
+        <div class="panel">
+            <div style="padding: 15px;">
+                <h3 style="color:#ffcc00; margin:0 0 10px 0;">New Node</h3>
+                <form id="railForm" class="wiki-form">
+                    <input type="hidden" name="entry_type" value="rail">
+                    <label>Station Name</label>
+                    <input type="text" name="node_name" id="nName" required>
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;"><label>X</label><input type="number" name="coord_x" id="nX" required></div>
+                        <div style="flex:1;"><label>Z</label><input type="number" name="coord_z" id="nZ" required></div>
+                    </div>
+                    <label>Connections (IDs)</label>
+                    <input type="text" name="connections" id="nConns" placeholder="spawn, wp-12">
+                    <button type="submit" class="pan-button" style="width:100%; margin-top:15px;">Save to Database</button>
+                </form>
+            </div>
+            <div class="board-header">Existing Nodes</div>
+            <div id="nodeList">Loading...</div>
+            <div class="debug-log" id="debugLog">System Initializing...</div>
+        </div>
+
+        <div class="panel map-workspace" id="svgContainer">
+            <div class="sync-status" id="syncStatus">WAITING FOR DYNMAP HEARTBEAT...</div>
+            <iframe id="dynmapFrame" class="dynmap-frame" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe>
+            <div class="svg-overlay">
+                <svg id="transitMap">
+                    <g id="mapGroup">
+                        <g id="linesLayer"></g>
+                        <g id="nodesLayer"></g>
+                        <g id="labelsLayer"></g>
+                    </g>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycbyKTmVkp_Q66Da8Ok-D7Iga6SCjJaePc-mq-45xJBufYBLMnxSNgQHObln9i9vlCsaz/exec';
+let activeRails = [];
+let hoverX = 0, hoverZ = 0;
+
+function log(msg) {
+    const l = document.getElementById('debugLog');
+    l.innerText += "\n> " + msg;
+    l.scrollTop = l.scrollHeight;
+}
+
+window.addEventListener('message', function(e) {
+    if (e.data.type === 'AUTO_SYNC') {
+        const panX = e.data.originX;
+        const panY = e.data.originY;
+        const scale = e.data.mapScale;
+        document.getElementById('mapGroup').setAttribute('transform', `translate(${panX}, ${panY}) scale(${scale})`);
+        document.getElementById('syncStatus').innerText = `AUTO-SYNC: ACTIVE (Scale: ${scale.toFixed(3)})`;
+    }
+    if (e.data.type === 'HOVER_DATA') {
+        hoverX = e.data.mcX;
+        hoverZ = e.data.mcZ;
+    }
+    if (e.data.type === 'SYNC_KEY' && e.data.key === 'p') {
+        document.getElementById('nX').value = Math.round(hoverX);
+        document.getElementById('nZ').value = Math.round(hoverZ);
+        log("Captured Coords.");
+    }
+});
+
+async function boot() {
+    log("Fetching nodes...");
+    try {
+        const res = await fetch(scriptURL);
+        activeRails = await res.json();
+        log(`Success: Found ${activeRails.length} nodes.`);
+        renderList();
+        drawMap();
+    } catch(err) { 
+        log("Fetch Failed. Check Apps Script URL.");
+    }
+}
+
+function renderList() {
+    document.getElementById('nodeList').innerHTML = activeRails.map(n => `
+        <div style="background:rgba(255,255,255,0.05); padding:8px; border-bottom:1px solid #333;">
+            <strong style="color:#ffcc00;">${n.name || 'Station'}</strong><br>
+            <span style="color:#666; font-size:9px;">ID: ${n.id} (${n.x}, ${n.z})</span>
+        </div>
+    `).join('') || "No nodes found.";
+}
+
+function drawMap() {
+    const lines = document.getElementById('linesLayer');
+    const nodes = document.getElementById('nodesLayer');
+    const labels = document.getElementById('labelsLayer');
+    lines.innerHTML = ''; nodes.innerHTML = ''; labels.innerHTML = '';
+
+    activeRails.forEach(n => {
+        const x = parseFloat(n.x);
+        const z = parseFloat(n.z);
+        const color = n.color || '#55aaff';
+
+        if (n.connections && Array.isArray(n.connections)) {
+            n.connections.forEach(targetId => {
+                const target = activeRails.find(r => r.id === targetId.trim());
+                if (target) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", x);
+                    line.setAttribute("y1", z);
+                    line.setAttribute("x2", target.x);
+                    line.setAttribute("y2", target.z);
+                    line.setAttribute("stroke", color);
+                    line.setAttribute("stroke-width", "8");
+                    line.setAttribute("stroke-linecap", "round");
+                    line.setAttribute("opacity", "0.8");
+                    lines.appendChild(line);
+                }
+            });
+        }
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", z);
+        circle.setAttribute("r", "12");
+        circle.setAttribute("fill", color);
+        circle.setAttribute("stroke", "#000");
+        circle.setAttribute("stroke-width", "2");
+        nodes.appendChild(circle);
+
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", x + 18);
+        text.setAttribute("y", z + 6);
+        text.setAttribute("fill", "#fff");
+        text.setAttribute("style", "font-family: Arial; font-weight: bold; font-size: 16px; text-shadow: 2px 2px #000;");
+        text.textContent = n.name || n.id;
+        labels.appendChild(text);
+    });
+}
+
+document.getElementById('railForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+    fetch(scriptURL, { method: 'POST', body: new FormData(e.target) })
+    .then(() => {
+        log("Node saved!");
+        e.target.reset();
+        btn.innerText = "Save to Database";
+        btn.disabled = false;
+        boot();
+    });
+});
+
+boot();
+</script>
+</body>
+</html>

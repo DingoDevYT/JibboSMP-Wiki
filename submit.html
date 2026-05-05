@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Submit</title>
+    <title>Submit - Server Wiki</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,6 +21,7 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content">
@@ -75,9 +76,11 @@
 </div>
 <datalist id="playerList"></datalist>
 <datalist id="groupList"></datalist>
+
 <script src="locations.js"></script>
 <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwqPk87YUs28POOGi8nhBoUVv8s0Du61HY1Dc8O3is5e5tNjhawT3cASCn-pGT-5yl5/exec';
+    // Successfully updated to your new deployment URL
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyDcbYi1sM6PivJaODNRJqMcTopIRsjc4f8bfUs7LfHNW5Cp8ng97RjpXjkcYPFSys0/exec';
     
     function switchTab(type) { 
         document.querySelectorAll('.dir-tab, .dir-section').forEach(el => el.classList.remove('active')); 
@@ -99,9 +102,15 @@
         const data = [...serverLocations, ...serverPlayers, ...serverGroups].find(item => item.id === id);
         if (data) {
             const f = document.querySelector(`#section-${type} form`);
-            if(type === 'location') { f.location_name.value = data.name; f.owned_by_player.value = data.ownerPlayer; f.owned_by_group.value = data.ownerGroup; f.coord_x.value = data.x; f.coord_y.value = data.y; f.coord_z.value = data.z; }
-            else if(type === 'player') { f.player_name.value = data.name; f.group_name.value = data.group; }
-            else { f.group_name.value = data.name; f.leader_name.value = data.leader; }
+            if(type === 'location') { 
+                f.location_name.value = data.name; f.owned_by_player.value = data.ownerPlayer; 
+                f.owned_by_group.value = data.ownerGroup; f.coord_x.value = data.x; 
+                f.coord_y.value = data.y; f.coord_z.value = data.z; 
+            } else if(type === 'player') { 
+                f.player_name.value = data.name; f.group_name.value = data.group; 
+            } else { 
+                f.group_name.value = data.name; f.leader_name.value = data.leader; 
+            }
             f.image_link.value = data.image; f.description.value = data.description;
         }
     };
@@ -111,7 +120,9 @@
             e.preventDefault();
             const btn = form.querySelector('button');
             btn.innerText = "Sending...";
-            fetch(scriptURL, { method: 'POST', body: new FormData(form)}).then(() => { alert("Submission received!"); location.href = "index.html"; });
+            fetch(scriptURL, { method: 'POST', body: new FormData(form)}).then(() => { 
+                alert("Submission received!"); location.href = "index.html"; 
+            });
         });
     });
 </script>

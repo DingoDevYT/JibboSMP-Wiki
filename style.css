@@ -98,3 +98,24 @@ iframe { width: 100%; height: 100%; border: none; display: block; }
     color: #ffffff; 
     border-bottom: 1px solid #ffffff;
 }
+
+/* SVG Transit Map Styles */
+.map-container { 
+    overflow: hidden; 
+    cursor: grab; 
+    background-color: #0a0a0a; 
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+    position: relative; 
+}
+.map-container:active { cursor: grabbing; }
+svg { transform-origin: 0 0; width: 100%; height: 100%; }
+.rail-line { stroke-width: 8; stroke-linecap: round; opacity: 0.8; transition: stroke 0.3s, stroke-width 0.3s; }
+.rail-station { stroke: #111; stroke-width: 4; cursor: pointer; transition: r 0.2s; }
+.rail-station:hover { r: 20; }
+.station-label { fill: #fff; font-family: Tahoma, sans-serif; font-size: 24px; font-weight: bold; pointer-events: none; text-shadow: 3px 3px 0 #000; }
+
+.route-highlight { stroke: #ffcc00 !important; stroke-width: 16 !important; opacity: 1 !important; z-index: 10; }
+.station-highlight { fill: #ffcc00 !important; stroke: #fff !important; }
