@@ -21,24 +21,24 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
             <div style="flex: 0 0 400px;">
-                <img id="locImage" style="width: 100%; border: 2px solid #555; background: #111;">
-                <div style="background: #1e1e1e; padding: 15px; margin-top: 15px; border: 1px solid #444;">
-                    <p style="margin: 0 0 10px 0;"><strong>Coordinates:</strong> <span id="locCoords" style="color: #55aaff; font-family: monospace;"></span></p>
+                <img id="locImage" style="width: 100%; border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; background: rgba(255,255,255,0.5); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <div style="background: rgba(255,255,255,0.6); padding: 15px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.9); border-radius: 8px;">
+                    <p style="margin: 0 0 10px 0;"><strong>Coordinates:</strong> <span id="locCoords" style="color: #4facfe; font-family: monospace;"></span></p>
                     <p style="margin: 0 0 10px 0; font-size: 13px;"><strong>Built:</strong> <span id="buildDate"></span></p>
-                    <p id="ownerLink" style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #333;"></p>
+                    <p id="ownerLink" style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.1);"></p>
                 </div>
                 <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Page</button>
             </div>
             <div style="flex-grow: 1;">
-                <h1 id="locTitle" style="color: #55aaff; margin-top: 0;"></h1>
+                <h1 id="locTitle" style="color: #0a4275; margin-top: 0; text-shadow: 1px 1px 0 #fff;"></h1>
                 <div class="board-header">History</div>
-                <!-- Changed to allow HTML parsing for auto-links -->
-                <p id="locDesc" style="background: #262626; padding: 20px; border: 1px solid #444; line-height: 1.6;"></p>
+                <p id="locDesc" style="background: rgba(255,255,255,0.6); padding: 20px; border: 1px solid rgba(255,255,255,0.9); border-radius: 8px; line-height: 1.6; color: #1a365d;"></p>
             </div>
         </div>
     </div>
@@ -54,7 +54,6 @@ window.renderPage = function() {
     document.getElementById('locTitle').innerText = loc.name;
     document.getElementById('locImage').src = loc.image;
     
-    // Inject the auto-linked text
     document.getElementById('locDesc').innerHTML = autoLinkText(loc.description);
     
     document.getElementById('locCoords').innerText = `${loc.x}, ${loc.y}, ${loc.z}`;
@@ -63,8 +62,8 @@ window.renderPage = function() {
     let linkHtml = "Built By: ";
     const p = serverPlayers.find(x => x.name.toLowerCase() === loc.ownerPlayer.toLowerCase());
     const g = serverGroups.find(x => x.name.toLowerCase() === loc.ownerGroup.toLowerCase());
-    if (p) linkHtml += `<a href="player.html?id=${p.id}" style="color:#55aaff;">${p.name}</a>`;
-    else if (g) linkHtml += `<a href="group.html?id=${g.id}" style="color:#55aaff;">${g.name}</a>`;
+    if (p) linkHtml += `<a href="player.html?id=${p.id}" style="color:#0a4275; font-weight:bold;">${p.name}</a>`;
+    else if (g) linkHtml += `<a href="group.html?id=${g.id}" style="color:#0a4275; font-weight:bold;">${g.name}</a>`;
     else linkHtml += (loc.ownerPlayer !== "N/A" ? loc.ownerPlayer : loc.ownerGroup);
     document.getElementById('ownerLink').innerHTML = linkHtml;
 

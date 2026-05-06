@@ -21,20 +21,20 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
             <div style="flex: 0 0 300px;">
-                <img id="groupImage" style="width: 100%; border: 2px solid #555; background: #111;">
+                <img id="groupImage" style="width: 100%; border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; background: rgba(255,255,255,0.5); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                 <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Group</button>
             </div>
             <div style="flex-grow: 1;">
-                <h1 id="groupName" style="color: #55aaff; margin-top: 0;"></h1>
-                <p style="font-weight: bold; color: #777;">Founded: <span id="foundDate"></span></p>
+                <h1 id="groupName" style="color: #0a4275; margin-top: 0; text-shadow: 1px 1px 0 #fff;"></h1>
+                <p style="font-weight: bold; color: #1a365d;">Founded: <span id="foundDate"></span></p>
                 <div class="board-header">History</div>
-                <!-- Changed to allow HTML parsing for auto-links -->
-                <p id="groupDesc" style="line-height: 1.6; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 20px;"></p>
+                <p id="groupDesc" style="background: rgba(255,255,255,0.6); padding: 20px; border: 1px solid rgba(255,255,255,0.9); border-radius: 8px; line-height: 1.6; color: #1a365d; margin-bottom: 20px;"></p>
                 <div class="board-header">Members</div>
                 <div id="memberList"></div>
             </div>
@@ -52,9 +52,7 @@ window.renderPage = function() {
     document.getElementById('groupName').innerText = group.name;
     document.getElementById('groupImage').src = group.image;
     
-    // Inject the auto-linked text
     document.getElementById('groupDesc').innerHTML = autoLinkText(group.description);
-    
     document.getElementById('foundDate').innerText = group.foundingDate;
     
     const m = serverPlayers.filter(p => p.group.toLowerCase() === group.name.toLowerCase());
@@ -63,13 +61,13 @@ window.renderPage = function() {
         const badge = isOnline ? `<span class="status-badge status-online" style="margin-left: 10px;">🟢</span>` : ``;
         return `
         <div class="board-item">
-            <div class="loc-thumb" style="width: 48px; height: 48px; background-image: url('${item.image}')"></div>
+            <img class="loc-thumb" style="width: 48px; height: 48px;" src="${item.image}" alt="Thumbnail">
             <div class="board-info">
                 <h2 style="margin-top:10px;"><a href="player.html?id=${item.id}">${item.name}</a> ${badge}</h2>
             </div>
         </div>
         `;
-    }).join('') || "<div class='board-item'><p>No members found.</p></div>";
+    }).join('') || "<div class='board-item'><p style='color:#555;'>No members found.</p></div>";
     
     document.getElementById('editBtn').onclick = () => location.href = `submit.html?type=group&edit=${group.id}`;
 };

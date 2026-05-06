@@ -25,7 +25,7 @@
         <a href="submit.html">Submit</a>
     </div>
     <div class="content">
-        <p style="color: #999; margin-top: 0;">Leave "Image URL" as <strong>N/A</strong> to auto-generate a Minecraft face based on the name.</p>
+        <p style="color: #1a365d; margin-top: 0;">Leave "Upload Image File" blank to auto-generate a Minecraft face based on the name, or to keep the existing image during an edit.</p>
         <div class="dir-tabs">
             <div class="dir-tab active" id="tab-location" onclick="switchTab('location')">Location</div>
             <div class="dir-tab" id="tab-player" onclick="switchTab('player')">Player</div>
@@ -35,6 +35,9 @@
         <div id="section-location" class="dir-section active">
             <form class="wiki-form">
                 <input type="hidden" name="entry_type" value="location">
+                <input type="hidden" name="entry_id" value="">
+                <input type="hidden" name="existing_image" value="N/A">
+                
                 <label>Name: <input type="text" name="location_name" required></label>
                 <div style="display:flex; gap:10px;">
                     <label style="flex:1;">Player: <input type="text" name="owned_by_player" list="playerList" value="N/A"></label>
@@ -45,7 +48,7 @@
                     <label style="flex:1;">Y: <input type="number" name="coord_y" required></label>
                     <label style="flex:1;">Z: <input type="number" name="coord_z" required></label>
                 </div>
-                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>Upload Image File (Optional): <input type="file" accept="image/png, image/jpeg, image/webp" class="form-input image-upload" style="background: rgba(255,255,255,0.9); cursor: pointer;"></label>
                 <label>Description: <textarea name="description" rows="5" required></textarea></label>
                 <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
             </form>
@@ -54,9 +57,12 @@
         <div id="section-player" class="dir-section">
             <form class="wiki-form">
                 <input type="hidden" name="entry_type" value="player">
+                <input type="hidden" name="entry_id" value="">
+                <input type="hidden" name="existing_image" value="N/A">
+                
                 <label>Username: <input type="text" name="player_name" required></label>
                 <label>Group: <input type="text" name="group_name" list="groupList" value="N/A"></label>
-                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>Upload Image File (Optional): <input type="file" accept="image/png, image/jpeg, image/webp" class="form-input image-upload" style="background: rgba(255,255,255,0.9); cursor: pointer;"></label>
                 <label>Bio: <textarea name="description" rows="5" required></textarea></label>
                 <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
             </form>
@@ -65,9 +71,12 @@
         <div id="section-group" class="dir-section">
             <form class="wiki-form">
                 <input type="hidden" name="entry_type" value="group">
+                <input type="hidden" name="entry_id" value="">
+                <input type="hidden" name="existing_image" value="N/A">
+                
                 <label>Name: <input type="text" name="group_name" required></label>
                 <label>Leader: <input type="text" name="leader_name" list="playerList" value="N/A"></label>
-                <label>Image URL: <input type="text" name="image_link" required value="N/A"></label>
+                <label>Upload Image File (Optional): <input type="file" accept="image/png, image/jpeg, image/webp" class="form-input image-upload" style="background: rgba(255,255,255,0.9); cursor: pointer;"></label>
                 <label>History: <textarea name="description" rows="5" required></textarea></label>
                 <button type="submit" class="pan-button" style="margin-top:20px;">Submit</button>
             </form>
@@ -79,8 +88,8 @@
 
 <script src="locations.js"></script>
 <script>
-    // Successfully updated to your new deployment URL
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyDcbYi1sM6PivJaODNRJqMcTopIRsjc4f8bfUs7LfHNW5Cp8ng97RjpXjkcYPFSys0/exec';
+    // NEW DEPLOYMENT LINK HERE
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbz70CstbzO0nE_Ae-aYo37zuTcma-PEQFSyjS7UvsD0ybfBcrdWjnmi8DSvF-qyyBof/exec';
     
     function switchTab(type) { 
         document.querySelectorAll('.dir-tab, .dir-section').forEach(el => el.classList.remove('active')); 
@@ -102,6 +111,10 @@
         const data = [...serverLocations, ...serverPlayers, ...serverGroups].find(item => item.id === id);
         if (data) {
             const f = document.querySelector(`#section-${type} form`);
+            
+            f.entry_id.value = data.id;
+            f.existing_image.value = data.image; 
+
             if(type === 'location') { 
                 f.location_name.value = data.name; f.owned_by_player.value = data.ownerPlayer; 
                 f.owned_by_group.value = data.ownerGroup; f.coord_x.value = data.x; 
@@ -111,7 +124,7 @@
             } else { 
                 f.group_name.value = data.name; f.leader_name.value = data.leader; 
             }
-            f.image_link.value = data.image; f.description.value = data.description;
+            f.description.value = data.description;
         }
     };
     
@@ -119,12 +132,42 @@
         form.addEventListener('submit', e => {
             e.preventDefault();
             const btn = form.querySelector('button');
-            btn.innerText = "Sending...";
-            fetch(scriptURL, { method: 'POST', body: new FormData(form)}).then(() => { 
-                alert("Submission received!"); location.href = "index.html"; 
-            });
+            btn.innerText = "Processing & Uploading...";
+            btn.disabled = true;
+            
+            const formData = new FormData(form);
+            const fileInput = form.querySelector('.image-upload');
+            
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    const base64Data = event.target.result.split(',')[1];
+                    formData.append('image_base64', base64Data);
+                    formData.append('image_name', file.name);
+                    submitDataToServer(formData, btn);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                submitDataToServer(formData, btn);
+            }
         });
     });
+
+    function submitDataToServer(formData, btn) {
+        fetch(scriptURL, { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => { 
+            alert("Upload Complete & Submission received!"); 
+            location.href = "index.html"; 
+        })
+        .catch(err => {
+            alert("An error occurred during submission. Please check your connection.");
+            btn.innerText = "Submit";
+            btn.disabled = false;
+        });
+    }
 </script>
 </body>
 </html>

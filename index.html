@@ -20,13 +20,14 @@
     <div class="navbar">
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
-        <a href="atlas-map.html">Interactive Atlas</a>
+        <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content">
-        <div style="background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 25px;">
-            <h2 style="margin: 0 0 10px 0; color: #55aaff;">Server Bulletin</h2>
-            <p style="margin: 0;">Welcome to the community archive for the Beta 1.7.3 SMP. Use the Directory to browse players and factions, or check the Atlas to view the live map.</p>
+        <div style="background: rgba(255,255,255,0.6); padding: 20px; border: 1px solid rgba(255,255,255,0.9); margin-bottom: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 100, 150, 0.1);">
+            <h2 style="margin: 0 0 10px 0; color: #0a4275; text-shadow: 1px 1px 0 #fff;">Server Bulletin</h2>
+            <p style="margin: 0; color: #1a365d;">Welcome to the community archive for the Beta 1.7.3 SMP. Use the Directory to browse players and factions, or check the Atlas to view the live map.</p>
         </div>
         <div class="board-header">Recent Approved Builds</div>
         <div id="latestBuilds"></div>
@@ -37,7 +38,7 @@
 window.renderPage = function() {
     document.getElementById('latestBuilds').innerHTML = serverLocations.slice(-5).reverse().map(loc => `
         <div class="board-item">
-            <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
+            <img class="loc-thumb" src="${loc.image}" alt="Thumbnail">
             <div class="board-info">
                 <h2><a href="location.html?id=${loc.id}">${loc.name}</a></h2>
                 <p>${loc.description.substring(0, 150)}...</p>

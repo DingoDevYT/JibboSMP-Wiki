@@ -2,21 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Voxel Maps - Transit</title>
+    <title>Voxel Maps - Live Transit GPS</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-workspace { position: relative; width: 100%; height: 850px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.8); background: #000; box-shadow: 0 10px 30px rgba(0, 100, 150, 0.3); }
+        .map-workspace { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        .dynmap-frame { position: absolute; width: 100%; height: 100%; border: none; z-index: 1; }
+        .svg-overlay { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        svg { width: 100%; height: 100%; }
+        
+        .floating-panel { position: absolute; background: rgba(24, 24, 24, 0.95); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; z-index: 10; backdrop-filter: blur(15px); box-shadow: 0 8px 32px rgba(0, 100, 150, 0.2), inset 0 1px 0 rgba(255,255,255,1); display: flex; flex-direction: column; overflow: hidden; }
+        .gps-controls { top: 20px; left: 20px; width: 340px; }
+        
+        .nav-header { background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); color: #0a4275; padding: 15px; font-weight: bold; font-size: 18px; text-shadow: 1px 1px 0px rgba(255,255,255,0.7); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.8); }
+        .nav-status { padding: 15px; font-size: 14px; line-height: 1.5; color: #1a365d; border-top: 1px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.3); }
+        .nav-status strong { color: #0a4275; font-size: 16px; display: block; margin-bottom: 5px; }
+        
+        .pulse-dot { fill: #00f2fe; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { r: 5; opacity: 1; } 100% { r: 25; opacity: 0; } }
+        
+        .route-highlight { stroke: #00f2fe !important; stroke-width: 14 !important; opacity: 0.9 !important; }
+        .station-highlight { fill: #00f2fe !important; stroke: #fff !important; r: 16 !important; }
+    </style>
 </head>
 <body>
-<div class="forum-wrapper">
-    <div class="header">
-        <div class="header-left">
-            <img src="assets/server-icon.png" class="logo" alt="Logo">
-            <h1>Voxel Maps Transit Routing</h1>
-        </div>
-        <div class="global-search-container">
-            <input type="text" id="globalSearch" placeholder="Search Wiki..." onkeyup="globalSearch()">
-            <div id="searchResults"></div>
-        </div>
-    </div>
+<div class="forum-wrapper" style="max-width: 1600px; width: 98%;">
     <div class="navbar">
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
@@ -25,146 +35,368 @@
         <a href="submit.html">Submit</a>
     </div>
     
-    <div class="content split-container">
-        <div class="sidebar" style="padding: 20px;">
-            <h2 style="color: #55aaff; margin-top: 0;">Plan Route</h2>
-            <label style="color:#ccc; font-weight:bold; display:block; margin-bottom:5px;">Starting Station:</label>
-            <select id="routeStart" style="width:100%; padding:8px; background:#111; color:#fff; border:1px solid #555; margin-bottom:15px; font-family: Tahoma;"></select>
-            
-            <label style="color:#ccc; font-weight:bold; display:block; margin-bottom:5px;">Destination:</label>
-            <select id="routeEnd" style="width:100%; padding:8px; background:#111; color:#fff; border:1px solid #555; margin-bottom:20px; font-family: Tahoma;"></select>
-            
-            <button class="pan-button" style="width:100%;" onclick="calculateRoute()">Find Fastest Route</button>
-            <button class="pan-button" style="width:100%; margin-top:10px; background:#444;" onclick="resetMap()">Clear Route</button>
-
-            <div id="routeResults" style="margin-top: 20px; color: #ffcc00; font-weight: bold; line-height: 1.5;"></div>
-        </div>
-        
-        <div class="map-wrapper map-container" id="mapContainer">
-            <div id="emptyWarning" style="display:none; position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.8); color:#ff5555; padding:15px; border:1px solid #ff5555; z-index:100;">
-                <strong>No Rail Data Found!</strong><br>The database is currently empty. Use the Admin Network Builder to draw the subway lines.
-            </div>
-            <svg id="transitMap">
-                <g id="mapGroup">
+    <div class="content admin-workspace">
+        <div class="map-workspace" id="svgContainer">
+            <iframe id="dynmapFrame" class="dynmap-frame" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe>
+            <div class="svg-overlay">
+                <svg id="transitMap">
                     <g id="linesLayer"></g>
                     <g id="nodesLayer"></g>
                     <g id="labelsLayer"></g>
-                </g>
-            </svg>
+                    <g id="playerLayer">
+                        <circle id="playerPulse" class="pulse-dot" cx="-1000" cy="-1000" r="5"></circle>
+                        <circle id="playerDot" fill="#fff" stroke="#0a4275" stroke-width="3" cx="-1000" cy="-1000" r="7"></circle>
+                        <text id="playerLabel" fill="#0a4275" font-family="Tahoma" font-weight="bold" font-size="16" x="-1000" y="-1000" style="text-shadow: 1px 1px 0 #fff;"></text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <div class="floating-panel gps-controls">
+            <div class="nav-header">
+                <span>Voxel GPS</span>
+                <span id="liveIndicator" style="font-size: 11px; background: #0a4275; color: #fff; padding: 4px 8px; border-radius: 12px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); text-shadow: none;">LIVE</span>
+            </div>
+            <div style="padding: 15px;">
+                <label style="color:#0a4275; font-size:12px; font-weight:bold;">Who are you? (Live Players)</label>
+                <select id="playerSelect" class="form-input" style="width:100%; margin-bottom:15px;">
+                    <option value="">Searching for players...</option>
+                </select>
+                
+                <label style="color:#0a4275; font-size:12px; font-weight:bold;">Destination Station:</label>
+                <select id="destSelect" class="form-input" style="width:100%; margin-bottom:20px;">
+                    <option value="">Loading stations...</option>
+                </select>
+                
+                <button id="startNavBtn" class="pan-button" style="width:100%; font-size: 16px; padding: 12px;" onclick="startNavigation()">Start Navigation</button>
+                <button id="stopNavBtn" class="pan-button" style="width:100%; font-size: 16px; padding: 12px; background: linear-gradient(180deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); color: #8b0000; border-color: #ffb6c1; display:none;" onclick="stopNavigation()">End Route</button>
+            </div>
+            
+            <div id="navInstructions" class="nav-status">
+                <strong>System Ready</strong>
+                Select your username and a destination to begin GPS routing.
+            </div>
         </div>
     </div>
 </div>
 
-<script src="locations.js"></script>
 <script>
-let scale = 0.2, panX = 0, panY = 0, isDragging = false, startX, startY;
-const mapGroup = document.getElementById('mapGroup');
+// NEW DEPLOYMENT LINK HERE
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz70CstbzO0nE_Ae-aYo37zuTcma-PEQFSyjS7UvsD0ybfBcrdWjnmi8DSvF-qyyBof/exec';
+const DYNMAP_URL = 'https://dynmap-proxy.landonian2006.workers.dev/up/world/world/0';
+const ARRIVAL_RADIUS = 15; 
 
-window.renderPage = function() {
-    if (serverRails.length === 0) {
-        document.getElementById('emptyWarning').style.display = 'block';
+const BASE_PIXELS_PER_BLOCK = 1; 
+const INVERT_Z = true;          
+const INVERT_X = false; 
+
+let mapCenterX = 0, mapCenterZ = 0, currentZoom = 0, screenW = 800, screenH = 800;
+
+let serverRails = [];
+let livePlayers = [];
+
+let isNavigating = false;
+let activeRoute = []; 
+let routeIndex = 0;
+let targetPlayerName = "";
+let lastSpokenNode = "";
+
+window.addEventListener('message', function(e) {
+    if (e.data.type === 'AUTO_SYNC') {
+        mapCenterX = e.data.centerX; mapCenterZ = e.data.centerZ;
+        currentZoom = e.data.zoomLevel;
+        screenW = e.data.width; screenH = e.data.height;
+        updateMapPositions();
+        updatePlayerMarker();
     }
+});
 
-    const stations = serverRails.filter(r => r.type === 'station').sort((a,b) => a.name.localeCompare(b.name));
-    const options = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    document.getElementById('routeStart').innerHTML = options;
-    document.getElementById('routeEnd').innerHTML = options;
+function getScreenPixel(nodeX, nodeZ) {
+    const scale = BASE_PIXELS_PER_BLOCK * Math.pow(2, currentZoom);
+    return {
+        x: (screenW / 2) + ((nodeZ - mapCenterZ) * scale * (INVERT_Z ? -1 : 1)),
+        y: (screenH / 2) + ((nodeX - mapCenterX) * scale * (INVERT_X ? -1 : 1))
+    };
+}
 
-    drawMap(serverRails);
+async function boot() {
+    try {
+        const res = await fetch(SCRIPT_URL);
+        serverRails = await res.json();
+        
+        const stations = serverRails.filter(r => r.type === 'station').sort((a,b) => a.name.localeCompare(b.name));
+        document.getElementById('destSelect').innerHTML = stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        
+        buildMapDOM();
+        setInterval(pollRadar, 1500);
+        pollRadar(); 
+    } catch(err) { console.error("Boot failed:", err); }
+}
 
-    if(serverRails.length > 0) {
-        const xs = serverRails.map(r => r.x), zs = serverRails.map(r => r.z);
-        panX = -(Math.min(...xs)) * scale + 200; 
-        panY = -(Math.min(...zs)) * scale + 200; 
-    } else {
-        panX = 300; panY = 300; 
+async function pollRadar() {
+    try {
+        const res = await fetch(DYNMAP_URL);
+        const data = await res.json();
+        if (data && data.players) {
+            livePlayers = data.players;
+            updatePlayerDropdown();
+            updatePlayerMarker();
+            if (isNavigating) processNavigationLogic();
+        }
+    } catch (e) {}
+}
+
+function updatePlayerDropdown() {
+    const select = document.getElementById('playerSelect');
+    const currentVal = select.value;
+    if (livePlayers.length === 0) {
+        select.innerHTML = `<option value="">No players online</option>`; return;
     }
-    updateTransform();
-};
+    select.innerHTML = livePlayers.map(p => `<option value="${p.account}">${p.name}</option>`).join('');
+    if (livePlayers.find(p => p.account === currentVal)) select.value = currentVal;
+}
 
-function drawMap(dataNodes) {
+function buildMapDOM() {
     const lines = document.getElementById('linesLayer');
     const nodes = document.getElementById('nodesLayer');
     const labels = document.getElementById('labelsLayer');
     lines.innerHTML = ''; nodes.innerHTML = ''; labels.innerHTML = '';
 
-    lines.innerHTML += `<line x1="-100" y1="0" x2="100" y2="0" stroke="#fff" stroke-width="4" opacity="0.2"></line>`;
-    lines.innerHTML += `<line x1="0" y1="-100" x2="0" y2="100" stroke="#fff" stroke-width="4" opacity="0.2"></line>`;
-    labels.innerHTML += `<text x="10" y="-10" fill="#fff" opacity="0.3" font-size="24">Spawn (0,0)</text>`;
+    serverRails.forEach(n => {
+        n.domLines = [];
+        const color = n.color || '#55aaff';
 
-    dataNodes.forEach(node => {
-        node.connections.forEach(targetId => {
-            const target = dataNodes.find(r => r.id === targetId);
-            if(target) {
-                const color = node.color !== 'N/A' ? node.color : (target.color !== 'N/A' ? target.color : '#555');
-                lines.innerHTML += `<line id="edge-${node.id}-${target.id}" class="rail-line" x1="${node.x}" y1="${node.z}" x2="${target.x}" y2="${target.z}" stroke="${color}"></line>`;
+        if (n.connections && Array.isArray(n.connections)) {
+            n.connections.forEach(targetId => {
+                const target = serverRails.find(r => r.id === targetId.trim());
+                if (target) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("stroke", color); line.setAttribute("stroke-width", "6");
+                    line.setAttribute("stroke-linecap", "round"); line.setAttribute("opacity", "0.6");
+                    line.id = `edge-${n.id}-${target.id}`;
+                    lines.appendChild(line);
+                    n.domLines.push({ targetNode: target, element: line });
+                }
+            });
+        }
+
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("r", n.type === 'station' ? "10" : "4");
+        circle.setAttribute("fill", color); circle.setAttribute("stroke", "#fff");
+        circle.setAttribute("stroke-width", "2"); circle.id = `node-${n.id}`;
+        nodes.appendChild(circle);
+        n.domCircle = circle;
+
+        if (n.type === 'station') {
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("fill", "#0a4275");
+            text.setAttribute("style", "font-family: Tahoma; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; pointer-events: none;");
+            text.textContent = n.name || n.id;
+            labels.appendChild(text);
+            n.domText = text;
+        }
+    });
+    updateMapPositions();
+}
+
+function updateMapPositions() {
+    serverRails.forEach(n => {
+        if (!n.domCircle) return;
+        const p1 = getScreenPixel(parseFloat(n.x), parseFloat(n.z));
+
+        n.domLines.forEach(lineObj => {
+            const p2 = getScreenPixel(parseFloat(lineObj.targetNode.x), parseFloat(lineObj.targetNode.z));
+            lineObj.element.setAttribute("x1", p1.x); lineObj.element.setAttribute("y1", p1.y);
+            lineObj.element.setAttribute("x2", p2.x); lineObj.element.setAttribute("y2", p2.y);
+        });
+
+        n.domCircle.setAttribute("cx", p1.x); n.domCircle.setAttribute("cy", p1.y);
+        
+        if (n.domText) {
+            n.domText.setAttribute("x", p1.x + 15); n.domText.setAttribute("y", p1.y + 5);
+        }
+    });
+}
+
+function updatePlayerMarker() {
+    const me = livePlayers.find(p => p.account === document.getElementById('playerSelect').value);
+    const pPulse = document.getElementById('playerPulse'), pDot = document.getElementById('playerDot'), pLabel = document.getElementById('playerLabel');
+    
+    if (me) {
+        const p1 = getScreenPixel(me.x, me.z);
+        pPulse.setAttribute("cx", p1.x); pPulse.setAttribute("cy", p1.y);
+        pDot.setAttribute("cx", p1.x); pDot.setAttribute("cy", p1.y);
+        pLabel.setAttribute("x", p1.x + 15); pLabel.setAttribute("y", p1.y - 10);
+        pLabel.textContent = me.name;
+        
+        pPulse.style.display = "block"; pDot.style.display = "block"; pLabel.style.display = "block";
+        
+        if (isNavigating) {
+            document.getElementById('dynmapFrame').contentWindow.postMessage({ type: 'PAN_TO', x: me.x, z: me.z }, '*');
+        }
+    } else {
+        pPulse.style.display = "none"; pDot.style.display = "none"; pLabel.style.display = "none";
+    }
+}
+
+function getShortestPath(startId, endId) {
+    const nodes = {};
+    serverRails.forEach(r => nodes[r.id] = { ...r, edges: {} });
+    serverRails.forEach(r => {
+        r.connections.forEach(targetId => {
+            if(nodes[targetId]) {
+                const dist = Math.hypot(nodes[targetId].x - r.x, nodes[targetId].z - r.z);
+                nodes[r.id].edges[targetId] = dist; nodes[targetId].edges[r.id] = dist; 
             }
         });
     });
-
-    dataNodes.forEach(node => {
-        if(node.type === 'station') {
-            const color = node.color !== 'N/A' ? node.color : '#fff';
-            nodes.innerHTML += `<circle id="node-${node.id}" class="rail-station" cx="${node.x}" cy="${node.z}" r="15" fill="${color}"></circle>`;
-            labels.innerHTML += `<text x="${node.x + 25}" y="${node.z + 8}" class="station-label">${node.name}</text>`;
-        } else {
-            nodes.innerHTML += `<circle id="node-${node.id}" cx="${node.x}" cy="${node.z}" r="8" fill="#888"></circle>`;
+    const distances = {}, prev = {}, queue = new Set(Object.keys(nodes));
+    for (let id in nodes) distances[id] = Infinity;
+    distances[startId] = 0;
+    while (queue.size > 0) {
+        let curr = null;
+        for (let id of queue) { if (curr === null || distances[id] < distances[curr]) curr = id; }
+        if (distances[curr] === Infinity) break;
+        if (curr === endId) {
+            const path = []; let u = endId;
+            while (u) { path.unshift(u); u = prev[u]; }
+            return path;
         }
+        queue.delete(curr);
+        for (let neighbor in nodes[curr].edges) {
+            let alt = distances[curr] + nodes[curr].edges[neighbor];
+            if (alt < distances[neighbor]) { distances[neighbor] = alt; prev[neighbor] = curr; }
+        }
+    }
+    return null; 
+}
+
+function startNavigation() {
+    targetPlayerName = document.getElementById('playerSelect').value;
+    const destId = document.getElementById('destSelect').value;
+    
+    if (!targetPlayerName) return alert("Please select a live player.");
+    if (!destId) return alert("Please select a destination.");
+    
+    const me = livePlayers.find(p => p.account === targetPlayerName);
+    if (!me) return alert("Player is not currently on the map.");
+    
+    let closestStation = null, minD = Infinity;
+    serverRails.filter(r => r.type === 'station').forEach(s => {
+        const d = Math.hypot(s.x - me.x, s.z - me.z);
+        if (d < minD) { minD = d; closestStation = s; }
     });
+    
+    if (!closestStation) return alert("No stations found.");
+    
+    activeRoute = getShortestPath(closestStation.id, destId);
+    if (!activeRoute) return alert("No valid rail path to that destination.");
+    
+    isNavigating = true; routeIndex = 0; lastSpokenNode = "";
+    document.getElementById('startNavBtn').style.display = 'none';
+    document.getElementById('stopNavBtn').style.display = 'block';
+    
+    highlightRoute();
+    
+    const destNode = serverRails.find(r => r.id === destId);
+    let msg = `Routing to ${destNode.name}. Proceed to the nearest station: ${closestStation.name}.`;
+    updateUIInstruction("Walk to Station", msg);
+    speak(msg);
+    
+    document.getElementById('dynmapFrame').contentWindow.postMessage({ type: 'PAN_TO', x: me.x, z: me.z }, '*');
 }
 
-function calculateRoute() {
-    resetMap();
-    const start = document.getElementById('routeStart').value;
-    const end = document.getElementById('routeEnd').value;
-    if(!start || !end) return;
-    if(start === end) return alert("You are already at that station!");
+function stopNavigation() {
+    isNavigating = false; activeRoute = [];
+    document.getElementById('startNavBtn').style.display = 'block';
+    document.getElementById('stopNavBtn').style.display = 'none';
+    
+    serverRails.forEach(n => {
+        if(n.domCircle) { n.domCircle.classList.remove('station-highlight'); }
+        n.domLines.forEach(l => l.element.classList.remove('route-highlight'));
+    });
+    
+    updateUIInstruction("System Ready", "Select your username and a destination to begin GPS routing.");
+    speechSynthesis.cancel();
+}
 
-    const path = getShortestPath(start, end);
-    if(!path) {
-        document.getElementById('routeResults').innerText = "No connected route found.";
-        return;
-    }
+function highlightRoute() {
+    for (let i = 0; i < activeRoute.length; i++) {
+        const current = activeRoute[i];
+        const node = serverRails.find(r => r.id === current);
+        if(node && node.domCircle) node.domCircle.classList.add('station-highlight');
 
-    let totalDist = 0;
-    for(let i = 0; i < path.length - 1; i++) {
-        const n1 = serverRails.find(r => r.id === path[i]);
-        const n2 = serverRails.find(r => r.id === path[i+1]);
-        totalDist += Math.hypot(n2.x - n1.x, n2.z - n1.z);
-    }
-
-    document.getElementById('routeResults').innerHTML = `Optimal Route Found!<br>Stops: ${path.length - 1}<br>Distance: ${Math.round(totalDist)} blocks`;
-
-    for(let i = 0; i < path.length; i++) {
-        const current = path[i];
-        const stationCircle = document.getElementById(`node-${current}`);
-        if(stationCircle) stationCircle.classList.add('station-highlight');
-
-        if(i < path.length - 1) {
-            const next = path[i+1];
-            let edge = document.getElementById(`edge-${current}-${next}`) || document.getElementById(`edge-${next}-${current}`);
-            if(edge) edge.classList.add('route-highlight');
+        if (i < activeRoute.length - 1) {
+            const next = activeRoute[i+1];
+            if(node) {
+                const lineObj = node.domLines.find(l => l.targetNode.id === next);
+                if(lineObj) lineObj.element.classList.add('route-highlight');
+            }
+            const nextNode = serverRails.find(r => r.id === next);
+            if(nextNode) {
+                const lineObj2 = nextNode.domLines.find(l => l.targetNode.id === current);
+                if(lineObj2) lineObj2.element.classList.add('route-highlight');
+            }
         }
     }
 }
 
-function resetMap() {
-    document.querySelectorAll('.route-highlight, .station-highlight').forEach(el => el.classList.remove('route-highlight', 'station-highlight'));
-    document.getElementById('routeResults').innerText = "";
+function processNavigationLogic() {
+    if (routeIndex >= activeRoute.length) return; 
+    
+    const me = livePlayers.find(p => p.account === targetPlayerName);
+    if (!me) return; 
+    
+    const targetNodeId = activeRoute[routeIndex];
+    const targetNode = serverRails.find(r => r.id === targetNodeId);
+    const dist = Math.hypot(targetNode.x - me.x, targetNode.z - me.z);
+    
+    if (dist <= ARRIVAL_RADIUS) {
+        if (targetNode.id !== lastSpokenNode) {
+            lastSpokenNode = targetNode.id;
+            
+            if (routeIndex === activeRoute.length - 1) {
+                const msg = `Arriving at ${targetNode.name}. You have reached your destination.`;
+                updateUIInstruction("Arrived", msg); speak(msg);
+                setTimeout(stopNavigation, 5000); 
+            } else if (targetNode.type !== 'station') {
+                routeIndex++; 
+            } else {
+                let nextStation = null;
+                for (let i = routeIndex + 1; i < activeRoute.length; i++) {
+                    const futureNode = serverRails.find(r => r.id === activeRoute[i]);
+                    if (futureNode.type === 'station') { nextStation = futureNode; break; }
+                }
+                
+                let msg = `Approaching ${targetNode.name}. `;
+                if (nextStation) msg += `Remain on the train. Next stop: ${nextStation.name}.`;
+                
+                updateUIInstruction("En Route", msg); speak(msg);
+                routeIndex++; 
+            }
+        }
+    } else {
+        if (targetNode.type === 'station') {
+            updateUIInstruction("En Route", `Heading towards ${targetNode.name}. (${Math.round(dist)} blocks away)`);
+        }
+    }
 }
 
-const container = document.getElementById('mapContainer');
-container.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; });
-window.addEventListener('mouseup', () => isDragging = false);
-window.addEventListener('mousemove', e => { if(isDragging) { panX = e.clientX - startX; panY = e.clientY - startY; updateTransform(); }});
-container.addEventListener('wheel', e => {
-    e.preventDefault();
-    const zoomIntensity = 0.05;
-    scale += e.deltaY < 0 ? zoomIntensity : -zoomIntensity;
-    scale = Math.min(Math.max(0.05, scale), 2); 
-    updateTransform();
-});
-function updateTransform() { mapGroup.setAttribute('transform', `translate(${panX}, ${panY}) scale(${scale})`); }
+function updateUIInstruction(title, text) {
+    document.getElementById('navInstructions').innerHTML = `<strong>${title}</strong>${text}`;
+}
+
+function speak(text) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0; utterance.pitch = 1.1; 
+    window.speechSynthesis.speak(utterance);
+}
+
+document.getElementById('svgContainer').addEventListener('mousedown', () => { isNavigating = false; });
+document.getElementById('svgContainer').addEventListener('wheel', () => { isNavigating = false; });
+
+boot();
 </script>
 </body>
 </html>

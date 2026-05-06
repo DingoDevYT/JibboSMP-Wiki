@@ -21,22 +21,22 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content" id="profileContent" style="display:none;">
         <div style="display: flex; gap: 30px;">
             <div style="flex: 0 0 300px;">
-                <img id="pImg" style="width: 100%; border: 2px solid #555; image-rendering: pixelated; background: #111;">
+                <img id="pImg" style="width: 100%; border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; image-rendering: pixelated; background: rgba(255,255,255,0.5); box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
                 <button id="editBtn" class="pan-button" style="width: 100%; margin-top: 15px;">Edit Profile</button>
             </div>
             <div style="flex-grow: 1;">
-                <h1 style="color: #55aaff; margin-top: 0; display: flex; align-items: center;">
+                <h1 style="color: #0a4275; margin-top: 0; display: flex; align-items: center; text-shadow: 1px 1px 0 #fff;">
                     <span id="pName"></span> <span id="pOnlineStatus"></span>
                 </h1>
-                <p id="pStats" style="font-weight: bold; color: #777;"></p>
+                <p id="pStats" style="font-weight: bold; color: #1a365d;"></p>
                 <div class="board-header">Biography</div>
-                <!-- Changed to allow HTML parsing for auto-links -->
-                <p id="pDesc" style="line-height: 1.6; background: #262626; padding: 20px; border: 1px solid #444; margin-bottom: 20px;"></p>
+                <p id="pDesc" style="background: rgba(255,255,255,0.6); padding: 20px; border: 1px solid rgba(255,255,255,0.9); border-radius: 8px; line-height: 1.6; color: #1a365d; margin-bottom: 20px;"></p>
                 <div class="board-header">Builds</div>
                 <div id="builds"></div>
             </div>
@@ -54,30 +54,26 @@ window.renderPage = function() {
     document.getElementById('pName').innerText = player.name;
     document.getElementById('pImg').src = player.image;
     
-    // Inject the auto-linked text
     document.getElementById('pDesc').innerHTML = autoLinkText(player.description);
     
-    // Online Badge
     const isOnline = onlinePlayers.includes(player.name.toLowerCase());
     document.getElementById('pOnlineStatus').innerHTML = isOnline ? 
         `<span class="status-badge status-online">🟢 Online in-game</span>` : 
         `<span class="status-badge status-offline">🔴 Offline</span>`;
         
-    // Faction link
     const g = serverGroups.find(x => x.name === player.group);
-    const groupLink = g ? `<a href="group.html?id=${g.id}" style="color:#55aaff;">${g.name}</a>` : "None";
+    const groupLink = g ? `<a href="group.html?id=${g.id}" style="color:#0a4275; text-decoration:underline;">${g.name}</a>` : "None";
     document.getElementById('pStats').innerHTML = `Joined: ${player.joinDate} | Group: ${groupLink}`;
     
-    // Builds link
     const b = serverLocations.filter(l => l.ownerPlayer === player.name);
     document.getElementById('builds').innerHTML = b.map(item => `
         <div class="board-item">
-            <div class="loc-thumb" style="width: 48px; height: 48px; background-image: url('${item.image}')"></div>
+            <img class="loc-thumb" style="width: 48px; height: 48px;" src="${item.image}" alt="Thumbnail">
             <div class="board-info">
                 <h2 style="margin-top:10px;"><a href="location.html?id=${item.id}">${item.name}</a></h2>
             </div>
         </div>
-    `).join('') || "<p>No builds documented.</p>";
+    `).join('') || "<p style='color:#555;'>No builds documented.</p>";
     
     document.getElementById('editBtn').onclick = () => location.href = `submit.html?type=player&edit=${player.id}`;
 };

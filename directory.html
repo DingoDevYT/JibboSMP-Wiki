@@ -21,6 +21,7 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content">
@@ -58,14 +59,14 @@ function renderList(targetId, data, type) {
         }
         return `
         <div class="board-item">
-            <div class="loc-thumb" style="background-image: url('${item.image}')"></div>
+            <img class="loc-thumb" src="${item.image}" alt="Thumbnail">
             <div class="board-info">
                 <h2><a href="${type}.html?id=${item.id}">${item.name}</a> ${badge}</h2>
                 <p>${item.description.substring(0, 120)}...</p>
             </div>
         </div>
         `;
-    }).join('') || `<div class="board-item"><p style="margin:0;">No entries found.</p></div>`;
+    }).join('') || `<div class="board-item"><p style="margin:0; color:#555;">No entries found.</p></div>`;
 }
 </script>
 </body>

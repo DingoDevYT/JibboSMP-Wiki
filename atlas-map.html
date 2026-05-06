@@ -21,6 +21,7 @@
         <a href="index.html">Home</a>
         <a href="directory.html">Directory</a>
         <a href="atlas-map.html">Atlas</a>
+        <a href="voxel-maps.html">Voxel Maps</a>
         <a href="submit.html">Submit</a>
     </div>
     <div class="content">
@@ -39,9 +40,9 @@
 window.renderPage = function() {
     document.getElementById('locationList').innerHTML = serverLocations.map(loc => `
         <li class="board-item" id="sidebar-${loc.id}" style="cursor: pointer;" onclick="panMap(${loc.x}, ${loc.y}, ${loc.z}, '${loc.id}')">
-            <div class="loc-thumb" style="background-image: url('${loc.image}')"></div>
+            <img class="loc-thumb" src="${loc.image}" alt="Thumbnail">
             <div class="board-info">
-                <h2 style="margin-top: 5px; color: #55aaff;">${loc.name}</h2>
+                <h2 style="margin-top: 5px; color: #0a4275;">${loc.name}</h2>
                 <p>X: ${loc.x} Z: ${loc.z}</p>
             </div>
         </li>
@@ -53,10 +54,10 @@ window.renderPage = function() {
 
 function panMap(x, y, z, id) {
     document.getElementById('mapIframe').src = `https://dynmap-proxy.landonian2006.workers.dev/?x=${x}&y=${y}&z=${z}&zoom=6`;
-    document.querySelectorAll('.board-item').forEach(el => el.style.background = '#262626');
+    document.querySelectorAll('.board-item').forEach(el => el.style.background = 'rgba(255,255,255,0.6)');
     if(id) {
         const target = document.getElementById('sidebar-' + id);
-        if(target) target.style.background = '#3a4a1c';
+        if(target) target.style.background = 'rgba(79, 172, 254, 0.2)';
     }
 }
 </script>

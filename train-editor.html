@@ -5,16 +5,28 @@
     <title>Admin - Network Builder</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; height: 800px; }
-        .panel { background: #222; border: 1px solid #444; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; }
-        .map-workspace { flex-grow: 1; position: relative; background: #000; overflow: hidden; }
+        .admin-workspace { position: relative; width: 100%; height: 850px; border-radius: 8px; overflow: hidden; border: 1px solid #444; background: #000; }
+        .map-workspace { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         .dynmap-frame { position: absolute; width: 100%; height: 100%; border: none; z-index: 1; }
         .svg-overlay { position: absolute; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         svg { width: 100%; height: 100%; }
-        .rail-line { stroke-width: 8; stroke-linecap: round; opacity: 0.8; }
-        .sync-status { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: #8fdf5d; padding: 8px 12px; font-size: 11px; border: 1px solid #2d4a22; z-index: 20; border-radius: 4px; pointer-events: none; font-family: monospace; }
-        #nodeList { font-size: 11px; max-height: 250px; overflow-y: auto; padding: 10px; background: #1a1a1a; }
-        .debug-log { padding: 10px; font-family: monospace; font-size: 10px; color: #888; border-top: 1px solid #333; background: #111; max-height: 100px; overflow-y: auto; }
+        
+        .floating-panel { position: absolute; background: rgba(24, 24, 24, 0.95); border: 1px solid #444; border-radius: 8px; z-index: 10; backdrop-filter: blur(5px); box-shadow: 0 8px 32px rgba(0,0,0,0.6); display: flex; flex-direction: column; overflow: hidden; }
+        .builder-controls { bottom: 20px; left: 20px; width: 340px; }
+        
+        .sync-status { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); color: #ccc; padding: 12px 18px; font-size: 13px; border: 1px solid #444; z-index: 20; border-radius: 4px; pointer-events: none; line-height: 1.6; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .sync-status strong { color: #ffcc00; font-size: 14px; }
+        
+        .debug-log { padding: 10px 15px; font-family: monospace; font-size: 10px; color: #888; border-top: 1px solid #333; background: #111; max-height: 80px; overflow-y: auto; }
+        
+        .clickable-node { pointer-events: auto; cursor: pointer; transition: stroke-width 0.2s; }
+        .clickable-node:hover { stroke-width: 4; stroke: #fff; }
+        .clickable-edge { pointer-events: auto; cursor: crosshair; transition: stroke-width 0.2s, stroke 0.2s; }
+        .clickable-edge:hover { stroke-width: 14; stroke: #ffcc00 !important; opacity: 1 !important; }
+        
+        .preview-line { stroke: #ffcc00; stroke-width: 4; stroke-dasharray: 8 8; animation: dash 1s linear infinite; opacity: 0.8; }
+        .preview-node { fill: rgba(255, 204, 0, 0.4); stroke: #ffcc00; stroke-width: 2; }
+        @keyframes dash { to { stroke-dashoffset: -16; } }
     </style>
 </head>
 <body>
@@ -25,48 +37,83 @@
         <button onclick="boot()" style="background:#444; color:#fff; border:none; padding:5px 10px; cursor:pointer; margin-left:10px; border-radius:3px;">Reload Data</button>
     </div>
     
-    <div class="content admin-grid">
-        <div class="panel">
+    <div class="content admin-workspace">
+        <div class="map-workspace" id="svgContainer">
+            <iframe id="dynmapFrame" class="dynmap-frame" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe>
+            <div class="svg-overlay">
+                <svg id="transitMap">
+                    <g id="linesLayer"></g>
+                    <g id="nodesLayer"></g>
+                    <g id="previewLayer">
+                        <line id="previewLine" class="preview-line" style="display:none;"></line>
+                        <circle id="previewNode" class="preview-node" r="10" style="display:none;"></circle>
+                    </g>
+                    <g id="labelsLayer"></g>
+                </svg>
+            </div>
+        </div>
+
+        <div class="sync-status" id="syncStatus">
+            <strong>Builder Controls:</strong><br>
+            <b>Click Node</b> to Edit/Branch.<br>
+            <b>Click Line</b> to split at mouse.<br>
+            <b>P</b> to grab snapped coords.<br>
+            <b>N</b> to rapid-branch.
+        </div>
+
+        <div class="floating-panel builder-controls">
             <div style="padding: 15px;">
-                <h3 style="color:#ffcc00; margin:0 0 10px 0;">New Node</h3>
+                <div id="modeIndicator" style="background:#444; color:#fff; padding:8px; text-align:center; margin-bottom:15px; font-weight:bold; border-radius:4px; font-size:14px;">Build Mode: New Node</div>
                 <form id="railForm" class="wiki-form">
                     <input type="hidden" name="entry_type" value="rail">
-                    <label>Station Name</label>
-                    <input type="text" name="node_name" id="nName" required>
+                    <input type="hidden" name="node_id" id="nId">
+                    
+                    <label>Node Type</label>
+                    <select name="node_type" id="nType">
+                        <option value="station">Station</option>
+                        <option value="waypoint">Waypoint (Corner)</option>
+                    </select>
+
+                    <label>Node Name (Optional for Waypoints)</label>
+                    <input type="text" name="node_name" id="nName">
+                    
+                    <label>Color (Hex)</label>
+                    <input type="text" name="node_color" id="nColor" value="#55aaff">
+                    
                     <div style="display:flex; gap:10px;">
                         <div style="flex:1;"><label>X</label><input type="number" name="coord_x" id="nX" required></div>
                         <div style="flex:1;"><label>Z</label><input type="number" name="coord_z" id="nZ" required></div>
                     </div>
+                    
                     <label>Connections (IDs)</label>
-                    <input type="text" name="connections" id="nConns" placeholder="spawn, wp-12">
-                    <button type="submit" class="pan-button" style="width:100%; margin-top:15px;">Save to Database</button>
+                    <input type="text" name="connections" id="nConns">
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button type="submit" id="submitBtn" class="pan-button" style="flex:2;">Push Node</button>
+                        <button type="button" id="cancelBtn" class="pan-button" style="flex:1; background:#666; display:none;" onclick="clearSelection()">Cancel</button>
+                    </div>
                 </form>
             </div>
-            <div class="board-header">Existing Nodes</div>
-            <div id="nodeList">Loading...</div>
             <div class="debug-log" id="debugLog">System Initializing...</div>
         </div>
 
-        <div class="panel map-workspace" id="svgContainer">
-            <div class="sync-status" id="syncStatus">WAITING FOR DYNMAP HEARTBEAT...</div>
-            <iframe id="dynmapFrame" class="dynmap-frame" src="https://dynmap-proxy.landonian2006.workers.dev/#"></iframe>
-            <div class="svg-overlay">
-                <svg id="transitMap">
-                    <g id="mapGroup">
-                        <g id="linesLayer"></g>
-                        <g id="nodesLayer"></g>
-                        <g id="labelsLayer"></g>
-                    </g>
-                </svg>
-            </div>
-        </div>
     </div>
 </div>
 
 <script>
-const scriptURL = 'https://script.google.com/macros/s/AKfycbyKTmVkp_Q66Da8Ok-D7Iga6SCjJaePc-mq-45xJBufYBLMnxSNgQHObln9i9vlCsaz/exec';
+const BASE_PIXELS_PER_BLOCK = 1; 
+const INVERT_Z = true;          
+const INVERT_X = false;          
+
+// NEW DEPLOYMENT LINK HERE
+const scriptURL = 'https://script.google.com/macros/s/AKfycbz70CstbzO0nE_Ae-aYo37zuTcma-PEQFSyjS7UvsD0ybfBcrdWjnmi8DSvF-qyyBof/exec';
+
 let activeRails = [];
 let hoverX = 0, hoverZ = 0;
+let mapCenterX = 0, mapCenterZ = 0, currentZoom = 0, screenW = 800, screenH = 800;
+
+let selectedNodeId = null;
+let splittingEdge = null; 
 
 function log(msg) {
     const l = document.getElementById('debugLog');
@@ -74,24 +121,68 @@ function log(msg) {
     l.scrollTop = l.scrollHeight;
 }
 
+function projectPointOnSegment(px, pz, ax, az, bx, bz) {
+    const APx = px - ax, APz = pz - az;
+    const ABx = bx - ax, ABz = bz - az;
+    
+    const magAB2 = (ABx * ABx) + (ABz * ABz);
+    if (magAB2 === 0) return { x: ax, z: az }; 
+    
+    let t = ((APx * ABx) + (APz * ABz)) / magAB2;
+    t = Math.max(0, Math.min(1, t)); 
+    
+    return { x: Math.round(ax + ABx * t), z: Math.round(az + ABz * t) };
+}
+
+function getSnapCoords() {
+    let sx = hoverX, sz = hoverZ;
+    if (selectedNodeId) {
+        const sel = activeRails.find(r => r.id === selectedNodeId);
+        if (sel) {
+            const dx = hoverX - sel.x, dz = hoverZ - sel.z;
+            if (Math.abs(dx) < Math.abs(dz) * 0.36) sx = sel.x;
+            else if (Math.abs(dz) < Math.abs(dx) * 0.36) sz = sel.z;
+        }
+    }
+    return { sx, sz };
+}
+
 window.addEventListener('message', function(e) {
     if (e.data.type === 'AUTO_SYNC') {
-        const panX = e.data.originX;
-        const panY = e.data.originY;
-        const scale = e.data.mapScale;
-        document.getElementById('mapGroup').setAttribute('transform', `translate(${panX}, ${panY}) scale(${scale})`);
-        document.getElementById('syncStatus').innerText = `AUTO-SYNC: ACTIVE (Scale: ${scale.toFixed(3)})`;
+        mapCenterX = e.data.centerX; mapCenterZ = e.data.centerZ;
+        currentZoom = e.data.zoomLevel;
+        screenW = e.data.width; screenH = e.data.height;
+        updateMapPositions();
     }
-    if (e.data.type === 'HOVER_DATA') {
-        hoverX = e.data.mcX;
-        hoverZ = e.data.mcZ;
-    }
-    if (e.data.type === 'SYNC_KEY' && e.data.key === 'p') {
-        document.getElementById('nX').value = Math.round(hoverX);
-        document.getElementById('nZ').value = Math.round(hoverZ);
-        log("Captured Coords.");
-    }
+    if (e.data.type === 'HOVER_DATA') { hoverX = e.data.mcX; hoverZ = e.data.mcZ; }
+    if (e.data.type === 'SYNC_KEY') { processKeyCommand(e.data.key); }
 });
+
+window.addEventListener('keydown', function(e) {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+    processKeyCommand(e.key.toLowerCase());
+});
+
+function processKeyCommand(key) {
+    const snap = getSnapCoords();
+    if (key === 'p') {
+        document.getElementById('nX').value = Math.round(snap.sx);
+        document.getElementById('nZ').value = Math.round(snap.sz);
+        log(`Captured X: ${Math.round(snap.sx)} Z: ${Math.round(snap.sz)}`);
+    } else if (key === 'n') {
+        const branchId = selectedNodeId;
+        clearSelection();
+        document.getElementById('nX').value = Math.round(snap.sx);
+        document.getElementById('nZ').value = Math.round(snap.sz);
+        document.getElementById('nType').value = 'waypoint';
+        if (branchId) {
+            document.getElementById('nConns').value = branchId;
+            log(`Branching from: ${branchId}`);
+        } else {
+            log(`Starting new line.`);
+        }
+    }
+}
 
 async function boot() {
     log("Fetching nodes...");
@@ -99,31 +190,84 @@ async function boot() {
         const res = await fetch(scriptURL);
         activeRails = await res.json();
         log(`Success: Found ${activeRails.length} nodes.`);
-        renderList();
-        drawMap();
-    } catch(err) { 
-        log("Fetch Failed. Check Apps Script URL.");
-    }
+        buildMapDOM();
+    } catch(err) { log("Fetch Failed."); }
 }
 
-function renderList() {
-    document.getElementById('nodeList').innerHTML = activeRails.map(n => `
-        <div style="background:rgba(255,255,255,0.05); padding:8px; border-bottom:1px solid #333;">
-            <strong style="color:#ffcc00;">${n.name || 'Station'}</strong><br>
-            <span style="color:#666; font-size:9px;">ID: ${n.id} (${n.x}, ${n.z})</span>
-        </div>
-    `).join('') || "No nodes found.";
+function selectNode(id) {
+    splittingEdge = null;
+    const node = activeRails.find(r => r.id === id);
+    if (!node) return;
+    
+    selectedNodeId = id;
+    document.getElementById('nId').value = node.id;
+    document.getElementById('nType').value = node.type;
+    document.getElementById('nName').value = node.name === 'N/A' ? '' : node.name;
+    document.getElementById('nColor').value = node.color === 'N/A' ? '#55aaff' : node.color;
+    document.getElementById('nX').value = node.x;
+    document.getElementById('nZ').value = node.z;
+    document.getElementById('nConns').value = node.connections.join(', ');
+    
+    const ind = document.getElementById('modeIndicator');
+    ind.innerText = `Edit Mode: ${node.name || node.id}`;
+    ind.style.background = '#8fdf5d'; ind.style.color = '#000';
+    
+    document.getElementById('submitBtn').innerText = "Update Node";
+    document.getElementById('cancelBtn').style.display = "block";
+    updateMapPositions();
 }
 
-function drawMap() {
+function selectEdge(nodeA, nodeB) {
+    clearSelection();
+    splittingEdge = { a: nodeA, b: nodeB };
+    
+    const splitPoint = projectPointOnSegment(hoverX, hoverZ, parseFloat(nodeA.x), parseFloat(nodeA.z), parseFloat(nodeB.x), parseFloat(nodeB.z));
+    
+    document.getElementById('nX').value = splitPoint.x;
+    document.getElementById('nZ').value = splitPoint.z;
+    document.getElementById('nType').value = 'station';
+    document.getElementById('nConns').value = `${nodeA.id}, ${nodeB.id}`;
+    
+    const ind = document.getElementById('modeIndicator');
+    ind.innerText = `Split Edge: Insert Node`;
+    ind.style.background = '#e67e22'; ind.style.color = '#fff';
+    
+    document.getElementById('submitBtn').innerText = "Inject Node";
+    document.getElementById('cancelBtn').style.display = "block";
+    updateMapPositions();
+}
+
+function clearSelection() {
+    selectedNodeId = null; splittingEdge = null;
+    document.getElementById('nId').value = '';
+    document.getElementById('nName').value = '';
+    document.getElementById('nConns').value = '';
+    
+    const ind = document.getElementById('modeIndicator');
+    ind.innerText = "Build Mode: New Node";
+    ind.style.background = '#444'; ind.style.color = '#fff';
+    
+    document.getElementById('submitBtn').innerText = "Push Node";
+    document.getElementById('cancelBtn').style.display = "none";
+    updateMapPositions();
+}
+
+function getScreenPixel(nodeX, nodeZ) {
+    const scale = BASE_PIXELS_PER_BLOCK * Math.pow(2, currentZoom);
+    return {
+        x: (screenW / 2) + ((nodeZ - mapCenterZ) * scale * (INVERT_Z ? -1 : 1)),
+        y: (screenH / 2) + ((nodeX - mapCenterX) * scale * (INVERT_X ? -1 : 1))
+    };
+}
+
+function buildMapDOM() {
     const lines = document.getElementById('linesLayer');
     const nodes = document.getElementById('nodesLayer');
     const labels = document.getElementById('labelsLayer');
     lines.innerHTML = ''; nodes.innerHTML = ''; labels.innerHTML = '';
 
     activeRails.forEach(n => {
-        const x = parseFloat(n.x);
-        const z = parseFloat(n.z);
+        n.domLines = [];
         const color = n.color || '#55aaff';
 
         if (n.connections && Array.isArray(n.connections)) {
@@ -131,51 +275,119 @@ function drawMap() {
                 const target = activeRails.find(r => r.id === targetId.trim());
                 if (target) {
                     const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute("x1", x);
-                    line.setAttribute("y1", z);
-                    line.setAttribute("x2", target.x);
-                    line.setAttribute("y2", target.z);
-                    line.setAttribute("stroke", color);
-                    line.setAttribute("stroke-width", "8");
-                    line.setAttribute("stroke-linecap", "round");
-                    line.setAttribute("opacity", "0.8");
+                    line.setAttribute("stroke", color); line.setAttribute("stroke-width", "8");
+                    line.setAttribute("stroke-linecap", "round"); line.setAttribute("opacity", "0.8");
+                    line.setAttribute("class", "clickable-edge");
+                    line.onclick = () => selectEdge(n, target); 
                     lines.appendChild(line);
+                    n.domLines.push({ targetNode: target, element: line });
                 }
             });
         }
 
         const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", z);
-        circle.setAttribute("r", "12");
-        circle.setAttribute("fill", color);
-        circle.setAttribute("stroke", "#000");
-        circle.setAttribute("stroke-width", "2");
+        circle.setAttribute("r", n.type === 'station' ? "12" : "6");
+        circle.setAttribute("fill", color); circle.setAttribute("stroke", "#000");
+        circle.setAttribute("stroke-width", "2"); circle.setAttribute("class", "clickable-node");
+        circle.onclick = () => selectNode(n.id);
         nodes.appendChild(circle);
+        n.domCircle = circle;
 
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", x + 18);
-        text.setAttribute("y", z + 6);
-        text.setAttribute("fill", "#fff");
-        text.setAttribute("style", "font-family: Arial; font-weight: bold; font-size: 16px; text-shadow: 2px 2px #000;");
-        text.textContent = n.name || n.id;
-        labels.appendChild(text);
+        if (n.type === 'station') {
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("fill", "#fff");
+            text.setAttribute("style", "font-family: Tahoma; font-weight: bold; font-size: 16px; text-shadow: 2px 2px #000; pointer-events: none;");
+            text.textContent = n.name || n.id;
+            labels.appendChild(text);
+            n.domText = text;
+        }
     });
+    updateMapPositions();
 }
 
-document.getElementById('railForm').addEventListener('submit', e => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button');
-    btn.innerText = "Saving...";
-    btn.disabled = true;
-    fetch(scriptURL, { method: 'POST', body: new FormData(e.target) })
-    .then(() => {
-        log("Node saved!");
-        e.target.reset();
-        btn.innerText = "Save to Database";
-        btn.disabled = false;
-        boot();
+function updateMapPositions() {
+    activeRails.forEach(n => {
+        if (!n.domCircle) return;
+        const p1 = getScreenPixel(parseFloat(n.x), parseFloat(n.z));
+
+        n.domLines.forEach(lineObj => {
+            const p2 = getScreenPixel(parseFloat(lineObj.targetNode.x), parseFloat(lineObj.targetNode.z));
+            lineObj.element.setAttribute("x1", p1.x); lineObj.element.setAttribute("y1", p1.y);
+            lineObj.element.setAttribute("x2", p2.x); lineObj.element.setAttribute("y2", p2.y);
+        });
+
+        n.domCircle.setAttribute("cx", p1.x); n.domCircle.setAttribute("cy", p1.y);
+        
+        if (n.id === selectedNodeId) {
+            n.domCircle.setAttribute("stroke", "#fff"); n.domCircle.setAttribute("stroke-width", "4");
+        } else {
+            n.domCircle.setAttribute("stroke", "#000"); n.domCircle.setAttribute("stroke-width", "2");
+        }
+
+        if (n.domText) {
+            n.domText.setAttribute("x", p1.x + 18); n.domText.setAttribute("y", p1.y + 6);
+        }
     });
+
+    const pLine = document.getElementById('previewLine'), pNode = document.getElementById('previewNode');
+    if (selectedNodeId) {
+        const origin = activeRails.find(r => r.id === selectedNodeId);
+        const snap = getSnapCoords();
+        const p1 = getScreenPixel(origin.x, origin.z), p2 = getScreenPixel(snap.sx, snap.sz);
+        pLine.setAttribute("x1", p1.x); pLine.setAttribute("y1", p1.y);
+        pLine.setAttribute("x2", p2.x); pLine.setAttribute("y2", p2.y);
+        pNode.setAttribute("cx", p2.x); pNode.setAttribute("cy", p2.y);
+        pLine.style.display = "block"; pNode.style.display = "block";
+    } else if (splittingEdge) {
+        const p2 = getScreenPixel(parseFloat(document.getElementById('nX').value), parseFloat(document.getElementById('nZ').value));
+        pNode.setAttribute("cx", p2.x); pNode.setAttribute("cy", p2.y);
+        pLine.style.display = "none"; pNode.style.display = "block";
+    } else {
+        pLine.style.display = "none"; pNode.style.display = "none";
+    }
+}
+
+document.getElementById('railForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = "Transmitting..."; btn.disabled = true;
+    
+    const formData = new FormData(e.target);
+    try {
+        const res = await fetch(scriptURL, { method: 'POST', body: formData });
+        const data = await res.json();
+        const finalNewId = data.id || formData.get('node_id');
+        
+        if (splittingEdge && finalNewId) {
+            log("Rerouting adjacent nodes...");
+            const { a, b } = splittingEdge;
+            
+            if (a.connections.includes(b.id)) {
+                const newConnsA = a.connections.filter(id => id !== b.id); newConnsA.push(finalNewId);
+                const formA = new FormData();
+                formA.append('entry_type', 'rail'); formA.append('node_id', a.id);
+                formA.append('node_type', a.type); formA.append('node_name', a.name);
+                formA.append('node_color', a.color); formA.append('coord_x', a.x);
+                formA.append('coord_z', a.z); formA.append('connections', newConnsA.join(', '));
+                await fetch(scriptURL, { method: 'POST', body: formA });
+            }
+            if (b.connections.includes(a.id)) {
+                const newConnsB = b.connections.filter(id => id !== a.id); newConnsB.push(finalNewId);
+                const formB = new FormData();
+                formB.append('entry_type', 'rail'); formB.append('node_id', b.id);
+                formB.append('node_type', b.type); formB.append('node_name', b.name);
+                formB.append('node_color', b.color); formB.append('coord_x', b.x);
+                formB.append('coord_z', b.z); formB.append('connections', newConnsB.join(', '));
+                await fetch(scriptURL, { method: 'POST', body: formB });
+            }
+        }
+        
+        log("Network integration complete.");
+        e.target.reset(); clearSelection(); btn.disabled = false;
+        boot().then(() => { if(finalNewId) selectNode(finalNewId); });
+    } catch (err) {
+        log("Transmission Failed."); btn.disabled = false;
+    }
 });
 
 boot();
